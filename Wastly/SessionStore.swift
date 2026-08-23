@@ -11,6 +11,7 @@ final class SessionStore: ObservableObject {
     let directory: LocalFirstFoodDirectory
     let labelOCR: NutritionLabelOCR
     let plateMatcher: RemotePlateMatcher?
+    let factGenerator: RemoteFactGenerator?
 
     @Published var selectedChildID: UUID?
     @Published var isLocked: Bool
@@ -37,6 +38,7 @@ final class SessionStore: ObservableObject {
         self.store = LocalFoodStore(container: container)
         self.labelOCR = NutritionLabelOCR()
         self.plateMatcher = Self.configuredPlateMatcher()
+        self.factGenerator = Self.configuredFactGenerator()
         self.directory = LocalFirstFoodDirectory(
             store: store,
             live: RemoteFoodLookup(usdaAPIKey: Self.usdaAPIKey())
@@ -91,6 +93,32 @@ final class SessionStore: ObservableObject {
             key = nil
         }
         return RemotePlateMatcher(endpoint: url, apiKey: key)
+    }
+
+    private static func configuredFactGenerator() -> RemoteFactGenerator? {
+        guard let rawURL = Bundle.main.object(forInfoDictionaryKey: "FactServiceURL") as? String else {
+            return nil
+        }
+        let value = rawURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty,
+              !value.contains("$("),
+              let url = URL(string: value),
+              let host = url.host,
+              PrivacyAllowlist.isAllowedLLMURL(url, configuredHosts: [host])
+        else { return nil }
+
+        let rawKey = Bundle.main.object(forInfoDictionaryKey: "FactServiceAPIKey") as? String
+        let trimmedKey = rawKey?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let key: String?
+        if let trimmedKey,
+           !trimmedKey.isEmpty,
+           !trimmedKey.contains("$("),
+           trimmedKey != "paste-your-fact-service-key-here" {
+            key = trimmedKey
+        } else {
+            key = nil
+        }
+        return RemoteFactGenerator(endpoint: url, apiKey: key)
     }
 
     static func settings(in context: ModelContext) -> AppSettings {

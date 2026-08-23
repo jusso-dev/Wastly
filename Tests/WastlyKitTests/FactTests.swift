@@ -128,6 +128,13 @@ struct FactTests {
             now: now.addingTimeInterval(86_400),
             calendar: calendar
         ))
+        #expect(FactCachePolicy.shouldRegenerate(
+            cachedInputsHash: "\(baseline.inputsHash)|template-v1",
+            cachedAt: now.addingTimeInterval(-3_600),
+            currentInputsHash: "\(baseline.inputsHash)|\(FactPrompt.version)",
+            now: now,
+            calendar: calendar
+        ))
     }
 
     @Test func smallWasteUsesSmallObject() {
