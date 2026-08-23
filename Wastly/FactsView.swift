@@ -3,10 +3,13 @@ import SwiftUI
 import WastlyKit
 
 struct FactsView: View {
+    @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var session: SessionStore
     @Query(sort: \Child.createdAt) private var children: [Child]
     @Query private var settingsRows: [AppSettings]
     @Query(sort: \FoodLog.loggedAt) private var allLogs: [FoodLog]
+    @Query private var facts: [FunFact]
+    @State private var cacheNotice: String?
 
     private var unit: EnergyUnit { settingsRows.first?.energyUnit ?? .kilojoules }
     private var child: Child? {
@@ -23,15 +26,44 @@ struct FactsView: View {
         return childLogs.filter { $0.loggedAt >= start }
     }
 
+    private var totals: FactTotals {
+        FactTotals.from(logs: childLogs)
+    }
+
+    private var cachedFact: FunFact? {
+        guard let childID = child?.id else { return nil }
+        return facts
+            .filter { $0.child?.id == childID }
+            .max { $0.createdAt < $1.createdAt }
+    }
+
+    private var displayedFact: String {
+        if let cachedFact, cachedFact.inputsHash == totals.inputsHash {
+            return cachedFact.text
+        }
+        return FactTemplates.fact(for: totals, firstName: child?.firstName)
+    }
+
+    private var refreshID: String {
+        let day = Calendar.current.startOfDay(for: .now).timeIntervalSinceReferenceDate
+        return "\(child?.id.uuidString ?? "none")|\(Int(day))|\(totals.inputsHash)"
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    let totals = FactTotals.from(logs: childLogs)
                     JournalCard {
-                        Text(FactTemplates.fact(for: totals, firstName: child?.firstName))
-                            .font(.wastlyBody)
-                            .foregroundStyle(WastlyTheme.ink)
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(displayedFact)
+                                .font(.wastlyBody)
+                                .foregroundStyle(WastlyTheme.ink)
+                            if let cacheNotice {
+                                Text(cacheNotice)
+                                    .font(.wastlyCaption)
+                                    .foregroundStyle(WastlyTheme.muted)
+                            }
+                        }
                     }
                     weekChart
                     JournalCard {
@@ -52,6 +84,40 @@ struct FactsView: View {
             }
             .navigationTitle("Facts")
             .toolbar { ToolbarItem(placement: .topBarLeading) { ChildSwitcher() } }
+            .task(id: refreshID) { refreshFact() }
+        }
+    }
+
+    private func refreshFact(now: Date = .now) {
+        guard let child else { return }
+        let currentTotals = FactTotals.from(logs: childLogs, now: now)
+        let previous = cachedFact
+        guard FactCachePolicy.shouldRegenerate(
+            cachedInputsHash: previous?.inputsHash,
+            cachedAt: previous?.createdAt,
+            totals: currentTotals,
+            now: now
+        ) else { return }
+
+        let text = FactTemplates.fact(for: currentTotals, firstName: child.firstName)
+        if let previous, Calendar.current.isDate(previous.createdAt, inSameDayAs: now) {
+            previous.text = text
+            previous.inputsHash = currentTotals.inputsHash
+            previous.createdAt = now
+        } else {
+            modelContext.insert(FunFact(
+                text: text,
+                inputsHash: currentTotals.inputsHash,
+                createdAt: now,
+                child: child
+            ))
+        }
+
+        do {
+            try modelContext.save()
+            cacheNotice = nil
+        } catch {
+            cacheNotice = "The fact is available, but its offline cache could not be saved."
         }
     }
 
