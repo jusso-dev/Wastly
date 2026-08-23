@@ -28,6 +28,7 @@ struct TodayView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     dateScroller
                     totalsCard
+                    addLogButton
                     ForEach(MealSlot.allCases, id: \.self) { slot in
                         mealSection(slot)
                     }
@@ -37,17 +38,22 @@ struct TodayView: View {
             .navigationTitle("Today")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) { ChildSwitcher() }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showingLog = true
-                    } label: {
-                        Image(systemName: "plus")
-                            .font(.body.weight(.semibold))
-                    }
-                    .accessibilityLabel("Add a log")
-                }
             }
         }
+    }
+
+    private var addLogButton: some View {
+        Button {
+            showingLog = true
+        } label: {
+            Label("Add a food log", systemImage: "plus")
+                .font(.wastlyBody.weight(.semibold))
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.borderedProminent)
+        .controlSize(.large)
+        .tint(WastlyTheme.sage)
+        .accessibilityHint("Opens food search and amount controls")
     }
 
     private var dateScroller: some View {
@@ -65,10 +71,10 @@ struct TodayView: View {
                                 .font(.wastlyBody.weight(.semibold))
                                 .monospacedDigit()
                         }
-                        .foregroundStyle(Calendar.current.isDate(day, inSameDayAs: session.diaryDay) ? Color.white : WastlyTheme.ink)
+                        .foregroundStyle(Calendar.current.isDate(day, inSameDayAs: session.diaryDay) ? WastlyTheme.onAccent : WastlyTheme.ink)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
-                        .background(Calendar.current.isDate(day, inSameDayAs: session.diaryDay) ? WastlyTheme.sage : Color.white.opacity(0.7))
+                        .background(Calendar.current.isDate(day, inSameDayAs: session.diaryDay) ? WastlyTheme.sage : WastlyTheme.surface)
                         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     }
                 }
