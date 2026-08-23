@@ -267,8 +267,9 @@ public struct RemoteFoodLookup: LiveFoodLookup {
         let name = product.productName?.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let name, !name.isEmpty else { return nil }
         let kJ = product.nutriments?.energyKilojoulesPer100g?.value
-            ?? Energy.kilojoules(
-                fromKilocalories: product.nutriments?.energyKilocaloriesPer100g?.value ?? 0
+            ?? Energy.storedKilojoules(
+                from: product.nutriments?.energyKilocaloriesPer100g?.value ?? 0,
+                unit: .kilocalories
             )
         return FoodHit(
             id: "off:\(product.code ?? name)",
@@ -345,7 +346,7 @@ public struct RemoteFoodLookup: LiveFoodLookup {
             return row.value
         }
         if let row = energyRows.first(where: { $0.unit.caseInsensitiveCompare("kcal") == .orderedSame }) {
-            return Energy.kilojoules(fromKilocalories: row.value)
+            return Energy.storedKilojoules(from: row.value, unit: .kilocalories)
         }
         return 0
     }
