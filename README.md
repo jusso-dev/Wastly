@@ -12,9 +12,9 @@ Food lookup is local first: recents, custom foods, a bundled seed catalog, then 
 
 Optional cheap LLM can turn totals into fun facts. It never gets body stats, photos, or date of birth.
 
-This cut is the Swift package `WastlyKit`. The app shell is a stacked pull request. Vision OCR, CloudKit, and a live catalog host are not wired yet. Backup code exists as an envelope (wrong password does not change the store).
+This cut is WastlyKit plus the SwiftUI app shell. Vision OCR, CloudKit, and a live catalog host are not wired yet. Backup code exists as an envelope (wrong password does not change the store). Face ID lock is in the shell. Barcode is type plus Match, not a live camera.
 
-App icon art: [docs/app-icon.svg](docs/app-icon.svg)
+App icon art: [docs/app-icon.svg](docs/app-icon.svg) and [docs/app-icon.jpg](docs/app-icon.jpg). The Xcode catalog uses `Wastly/Assets.xcassets/AppIcon.appiconset/AppIcon.png` (1024 PNG).
 
 How to use the kit: [Sources/WastlyKit/INTEGRATION.md](Sources/WastlyKit/INTEGRATION.md)
 
