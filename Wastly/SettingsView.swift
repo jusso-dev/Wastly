@@ -1,3 +1,4 @@
+import Foundation
 import SwiftData
 import SwiftUI
 import WastlyKit
@@ -6,10 +7,7 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var context
     @EnvironmentObject private var session: SessionStore
     @Query private var settingsRows: [AppSettings]
-    @Query private var catalogState: [CatalogState]
-    @State private var showingClearCacheConfirmation = false
     @State private var showingRemovePasswordConfirmation = false
-    @State private var cacheMessage: String?
 
     private var settings: AppSettings {
         SessionStore.settings(in: context)
@@ -134,27 +132,7 @@ struct SettingsView: View {
                             .accessibilityIdentifier("settings.backupMessage")
                     }
                 }
-                Section("Catalog") {
-                    if let at = settings.lastCatalogSyncAt {
-                        Text("Last catalog update \(at.formatted(date: .abbreviated, time: .shortened))")
-                    } else {
-                        Text("Using the bundled seed until a catalog pull lands.")
-                    }
-                    Text("About \(settings.catalogBytesOnDisk / 1024) KB on disk")
-                        .font(.wastlyCaption)
-                    Button("Clear downloaded food cache", role: .destructive) {
-                        showingClearCacheConfirmation = true
-                    }
-                    .accessibilityIdentifier("settings.clearFoodCache")
-                    Text("Custom foods and diary logs are never removed.")
-                        .font(.wastlyCaption)
-                    if let cacheMessage {
-                        Text(cacheMessage)
-                            .font(.wastlyCaption)
-                            .foregroundStyle(WastlyTheme.muted)
-                            .accessibilityIdentifier("settings.cacheMessage")
-                    }
-                }
+                CatalogSettingsSection()
                 Section("About") {
                     Text("Logs stay on this iPhone. Backup uses your iCloud. Food lookup, online facts, and plate matching use only the network options described above. No ads. No analytics.")
                         .font(.wastlyCaption)
@@ -163,18 +141,6 @@ struct SettingsView: View {
             }
             .scrollContentBackground(.hidden)
             .navigationTitle("Settings")
-        }
-        .confirmationDialog(
-            "Clear downloaded food cache?",
-            isPresented: $showingClearCacheConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button("Clear downloaded cache", role: .destructive) {
-                clearFoodCache()
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Recent provider lookups will need internet again. Custom foods and diary logs stay on this iPhone.")
         }
         .confirmationDialog(
             "Remove the backup password?",
@@ -238,18 +204,6 @@ struct SettingsView: View {
         )
     }
 
-    private func clearFoodCache() {
-        Task {
-            do {
-                let removed = try await session.store.clearCacheLeavingCustomAndLogs()
-                cacheMessage = removed == 1
-                    ? "Removed 1 downloaded food."
-                    : "Removed \(removed) downloaded foods."
-            } catch {
-                cacheMessage = "Couldn’t clear the cache. Check available storage and try again."
-            }
-        }
-    }
 }
 
 struct BackupRestoreOfferSheet: View {

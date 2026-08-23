@@ -8,7 +8,7 @@ Private offline-first iOS diary of what a child eats and wastes.
 
 Native SwiftUI. No account. Child logs stay on the iPhone. Energy is stored as kJ. Display can show kcal.
 
-Food lookup is local first: recents, custom foods, a bundled seed catalog, then Open Food Facts and USDA results merged without duplicates. Copy `Secrets.xcconfig.example` to the gitignored `Secrets.xcconfig` for a USDA data.gov key. Open Food Facts barcode lookup works without one. NUTTAB is later, not v1.
+Food lookup is local first: recents, custom foods, a bundled seed catalog, and an optional versioned bulk catalog, then Open Food Facts and USDA results merged without duplicates. Bulk catalog packs download in the background and commit only when every pack succeeds, so the prior offline version survives a failed or cancelled update. Copy `Secrets.xcconfig.example` to the gitignored `Secrets.xcconfig` to set `CATALOG_URL` and an optional USDA data.gov key. Open Food Facts barcode lookup works without one. NUTTAB is later, not v1.
 
 Cloud plate matching is a separate, default-off opt-in. A configured HTTPS matcher receives only a compressed centre JPEG crop and returns candidates for parent confirmation; child details and source photo metadata are excluded.
 

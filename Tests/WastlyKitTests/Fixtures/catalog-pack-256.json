@@ -1,0 +1,1801 @@
+{
+  "version": 42,
+  "etag": "fixture-v42",
+  "pack": 1,
+  "totalPacks": 1,
+  "foods": [
+    {
+      "name": "Woolies Fixture Oats",
+      "brand": "Woolworths",
+      "barcode": "9300000000000",
+      "kilojoulesPer100g": 300,
+      "servingGrams": 20
+    },
+    {
+      "name": "AU Fixture Food 002",
+      "brand": "Fixture AU",
+      "barcode": "9300000000001",
+      "kilojoulesPer100g": 301,
+      "servingGrams": 21
+    },
+    {
+      "name": "AU Fixture Food 003",
+      "brand": "Fixture AU",
+      "barcode": "9300000000002",
+      "kilojoulesPer100g": 302,
+      "servingGrams": 22
+    },
+    {
+      "name": "AU Fixture Food 004",
+      "brand": "Fixture AU",
+      "barcode": "9300000000003",
+      "kilojoulesPer100g": 303,
+      "servingGrams": 23
+    },
+    {
+      "name": "AU Fixture Food 005",
+      "brand": "Fixture AU",
+      "barcode": "9300000000004",
+      "kilojoulesPer100g": 304,
+      "servingGrams": 24
+    },
+    {
+      "name": "AU Fixture Food 006",
+      "brand": "Fixture AU",
+      "barcode": "9300000000005",
+      "kilojoulesPer100g": 305,
+      "servingGrams": 25
+    },
+    {
+      "name": "AU Fixture Food 007",
+      "brand": "Fixture AU",
+      "barcode": "9300000000006",
+      "kilojoulesPer100g": 306,
+      "servingGrams": 26
+    },
+    {
+      "name": "AU Fixture Food 008",
+      "brand": "Fixture AU",
+      "barcode": "9300000000007",
+      "kilojoulesPer100g": 307,
+      "servingGrams": 27
+    },
+    {
+      "name": "AU Fixture Food 009",
+      "brand": "Fixture AU",
+      "barcode": "9300000000008",
+      "kilojoulesPer100g": 308,
+      "servingGrams": 28
+    },
+    {
+      "name": "AU Fixture Food 010",
+      "brand": "Fixture AU",
+      "barcode": "9300000000009",
+      "kilojoulesPer100g": 309,
+      "servingGrams": 29
+    },
+    {
+      "name": "AU Fixture Food 011",
+      "brand": "Fixture AU",
+      "barcode": "9300000000010",
+      "kilojoulesPer100g": 310,
+      "servingGrams": 20
+    },
+    {
+      "name": "AU Fixture Food 012",
+      "brand": "Fixture AU",
+      "barcode": "9300000000011",
+      "kilojoulesPer100g": 311,
+      "servingGrams": 21
+    },
+    {
+      "name": "AU Fixture Food 013",
+      "brand": "Fixture AU",
+      "barcode": "9300000000012",
+      "kilojoulesPer100g": 312,
+      "servingGrams": 22
+    },
+    {
+      "name": "AU Fixture Food 014",
+      "brand": "Fixture AU",
+      "barcode": "9300000000013",
+      "kilojoulesPer100g": 313,
+      "servingGrams": 23
+    },
+    {
+      "name": "AU Fixture Food 015",
+      "brand": "Fixture AU",
+      "barcode": "9300000000014",
+      "kilojoulesPer100g": 314,
+      "servingGrams": 24
+    },
+    {
+      "name": "AU Fixture Food 016",
+      "brand": "Fixture AU",
+      "barcode": "9300000000015",
+      "kilojoulesPer100g": 315,
+      "servingGrams": 25
+    },
+    {
+      "name": "AU Fixture Food 017",
+      "brand": "Fixture AU",
+      "barcode": "9300000000016",
+      "kilojoulesPer100g": 316,
+      "servingGrams": 26
+    },
+    {
+      "name": "AU Fixture Food 018",
+      "brand": "Fixture AU",
+      "barcode": "9300000000017",
+      "kilojoulesPer100g": 317,
+      "servingGrams": 27
+    },
+    {
+      "name": "AU Fixture Food 019",
+      "brand": "Fixture AU",
+      "barcode": "9300000000018",
+      "kilojoulesPer100g": 318,
+      "servingGrams": 28
+    },
+    {
+      "name": "AU Fixture Food 020",
+      "brand": "Fixture AU",
+      "barcode": "9300000000019",
+      "kilojoulesPer100g": 319,
+      "servingGrams": 29
+    },
+    {
+      "name": "AU Fixture Food 021",
+      "brand": "Fixture AU",
+      "barcode": "9300000000020",
+      "kilojoulesPer100g": 320,
+      "servingGrams": 20
+    },
+    {
+      "name": "AU Fixture Food 022",
+      "brand": "Fixture AU",
+      "barcode": "9300000000021",
+      "kilojoulesPer100g": 321,
+      "servingGrams": 21
+    },
+    {
+      "name": "AU Fixture Food 023",
+      "brand": "Fixture AU",
+      "barcode": "9300000000022",
+      "kilojoulesPer100g": 322,
+      "servingGrams": 22
+    },
+    {
+      "name": "AU Fixture Food 024",
+      "brand": "Fixture AU",
+      "barcode": "9300000000023",
+      "kilojoulesPer100g": 323,
+      "servingGrams": 23
+    },
+    {
+      "name": "AU Fixture Food 025",
+      "brand": "Fixture AU",
+      "barcode": "9300000000024",
+      "kilojoulesPer100g": 324,
+      "servingGrams": 24
+    },
+    {
+      "name": "AU Fixture Food 026",
+      "brand": "Fixture AU",
+      "barcode": "9300000000025",
+      "kilojoulesPer100g": 325,
+      "servingGrams": 25
+    },
+    {
+      "name": "AU Fixture Food 027",
+      "brand": "Fixture AU",
+      "barcode": "9300000000026",
+      "kilojoulesPer100g": 326,
+      "servingGrams": 26
+    },
+    {
+      "name": "AU Fixture Food 028",
+      "brand": "Fixture AU",
+      "barcode": "9300000000027",
+      "kilojoulesPer100g": 327,
+      "servingGrams": 27
+    },
+    {
+      "name": "AU Fixture Food 029",
+      "brand": "Fixture AU",
+      "barcode": "9300000000028",
+      "kilojoulesPer100g": 328,
+      "servingGrams": 28
+    },
+    {
+      "name": "AU Fixture Food 030",
+      "brand": "Fixture AU",
+      "barcode": "9300000000029",
+      "kilojoulesPer100g": 329,
+      "servingGrams": 29
+    },
+    {
+      "name": "AU Fixture Food 031",
+      "brand": "Fixture AU",
+      "barcode": "9300000000030",
+      "kilojoulesPer100g": 330,
+      "servingGrams": 20
+    },
+    {
+      "name": "AU Fixture Food 032",
+      "brand": "Fixture AU",
+      "barcode": "9300000000031",
+      "kilojoulesPer100g": 331,
+      "servingGrams": 21
+    },
+    {
+      "name": "AU Fixture Food 033",
+      "brand": "Fixture AU",
+      "barcode": "9300000000032",
+      "kilojoulesPer100g": 332,
+      "servingGrams": 22
+    },
+    {
+      "name": "AU Fixture Food 034",
+      "brand": "Fixture AU",
+      "barcode": "9300000000033",
+      "kilojoulesPer100g": 333,
+      "servingGrams": 23
+    },
+    {
+      "name": "AU Fixture Food 035",
+      "brand": "Fixture AU",
+      "barcode": "9300000000034",
+      "kilojoulesPer100g": 334,
+      "servingGrams": 24
+    },
+    {
+      "name": "AU Fixture Food 036",
+      "brand": "Fixture AU",
+      "barcode": "9300000000035",
+      "kilojoulesPer100g": 335,
+      "servingGrams": 25
+    },
+    {
+      "name": "AU Fixture Food 037",
+      "brand": "Fixture AU",
+      "barcode": "9300000000036",
+      "kilojoulesPer100g": 336,
+      "servingGrams": 26
+    },
+    {
+      "name": "AU Fixture Food 038",
+      "brand": "Fixture AU",
+      "barcode": "9300000000037",
+      "kilojoulesPer100g": 337,
+      "servingGrams": 27
+    },
+    {
+      "name": "AU Fixture Food 039",
+      "brand": "Fixture AU",
+      "barcode": "9300000000038",
+      "kilojoulesPer100g": 338,
+      "servingGrams": 28
+    },
+    {
+      "name": "AU Fixture Food 040",
+      "brand": "Fixture AU",
+      "barcode": "9300000000039",
+      "kilojoulesPer100g": 339,
+      "servingGrams": 29
+    },
+    {
+      "name": "AU Fixture Food 041",
+      "brand": "Fixture AU",
+      "barcode": "9300000000040",
+      "kilojoulesPer100g": 340,
+      "servingGrams": 20
+    },
+    {
+      "name": "AU Fixture Food 042",
+      "brand": "Fixture AU",
+      "barcode": "9300000000041",
+      "kilojoulesPer100g": 341,
+      "servingGrams": 21
+    },
+    {
+      "name": "AU Fixture Food 043",
+      "brand": "Fixture AU",
+      "barcode": "9300000000042",
+      "kilojoulesPer100g": 342,
+      "servingGrams": 22
+    },
+    {
+      "name": "AU Fixture Food 044",
+      "brand": "Fixture AU",
+      "barcode": "9300000000043",
+      "kilojoulesPer100g": 343,
+      "servingGrams": 23
+    },
+    {
+      "name": "AU Fixture Food 045",
+      "brand": "Fixture AU",
+      "barcode": "9300000000044",
+      "kilojoulesPer100g": 344,
+      "servingGrams": 24
+    },
+    {
+      "name": "AU Fixture Food 046",
+      "brand": "Fixture AU",
+      "barcode": "9300000000045",
+      "kilojoulesPer100g": 345,
+      "servingGrams": 25
+    },
+    {
+      "name": "AU Fixture Food 047",
+      "brand": "Fixture AU",
+      "barcode": "9300000000046",
+      "kilojoulesPer100g": 346,
+      "servingGrams": 26
+    },
+    {
+      "name": "AU Fixture Food 048",
+      "brand": "Fixture AU",
+      "barcode": "9300000000047",
+      "kilojoulesPer100g": 347,
+      "servingGrams": 27
+    },
+    {
+      "name": "AU Fixture Food 049",
+      "brand": "Fixture AU",
+      "barcode": "9300000000048",
+      "kilojoulesPer100g": 348,
+      "servingGrams": 28
+    },
+    {
+      "name": "AU Fixture Food 050",
+      "brand": "Fixture AU",
+      "barcode": "9300000000049",
+      "kilojoulesPer100g": 349,
+      "servingGrams": 29
+    },
+    {
+      "name": "AU Fixture Food 051",
+      "brand": "Fixture AU",
+      "barcode": "9300000000050",
+      "kilojoulesPer100g": 350,
+      "servingGrams": 20
+    },
+    {
+      "name": "AU Fixture Food 052",
+      "brand": "Fixture AU",
+      "barcode": "9300000000051",
+      "kilojoulesPer100g": 351,
+      "servingGrams": 21
+    },
+    {
+      "name": "AU Fixture Food 053",
+      "brand": "Fixture AU",
+      "barcode": "9300000000052",
+      "kilojoulesPer100g": 352,
+      "servingGrams": 22
+    },
+    {
+      "name": "AU Fixture Food 054",
+      "brand": "Fixture AU",
+      "barcode": "9300000000053",
+      "kilojoulesPer100g": 353,
+      "servingGrams": 23
+    },
+    {
+      "name": "AU Fixture Food 055",
+      "brand": "Fixture AU",
+      "barcode": "9300000000054",
+      "kilojoulesPer100g": 354,
+      "servingGrams": 24
+    },
+    {
+      "name": "AU Fixture Food 056",
+      "brand": "Fixture AU",
+      "barcode": "9300000000055",
+      "kilojoulesPer100g": 355,
+      "servingGrams": 25
+    },
+    {
+      "name": "AU Fixture Food 057",
+      "brand": "Fixture AU",
+      "barcode": "9300000000056",
+      "kilojoulesPer100g": 356,
+      "servingGrams": 26
+    },
+    {
+      "name": "AU Fixture Food 058",
+      "brand": "Fixture AU",
+      "barcode": "9300000000057",
+      "kilojoulesPer100g": 357,
+      "servingGrams": 27
+    },
+    {
+      "name": "AU Fixture Food 059",
+      "brand": "Fixture AU",
+      "barcode": "9300000000058",
+      "kilojoulesPer100g": 358,
+      "servingGrams": 28
+    },
+    {
+      "name": "AU Fixture Food 060",
+      "brand": "Fixture AU",
+      "barcode": "9300000000059",
+      "kilojoulesPer100g": 359,
+      "servingGrams": 29
+    },
+    {
+      "name": "AU Fixture Food 061",
+      "brand": "Fixture AU",
+      "barcode": "9300000000060",
+      "kilojoulesPer100g": 360,
+      "servingGrams": 20
+    },
+    {
+      "name": "AU Fixture Food 062",
+      "brand": "Fixture AU",
+      "barcode": "9300000000061",
+      "kilojoulesPer100g": 361,
+      "servingGrams": 21
+    },
+    {
+      "name": "AU Fixture Food 063",
+      "brand": "Fixture AU",
+      "barcode": "9300000000062",
+      "kilojoulesPer100g": 362,
+      "servingGrams": 22
+    },
+    {
+      "name": "AU Fixture Food 064",
+      "brand": "Fixture AU",
+      "barcode": "9300000000063",
+      "kilojoulesPer100g": 363,
+      "servingGrams": 23
+    },
+    {
+      "name": "AU Fixture Food 065",
+      "brand": "Fixture AU",
+      "barcode": "9300000000064",
+      "kilojoulesPer100g": 364,
+      "servingGrams": 24
+    },
+    {
+      "name": "AU Fixture Food 066",
+      "brand": "Fixture AU",
+      "barcode": "9300000000065",
+      "kilojoulesPer100g": 365,
+      "servingGrams": 25
+    },
+    {
+      "name": "AU Fixture Food 067",
+      "brand": "Fixture AU",
+      "barcode": "9300000000066",
+      "kilojoulesPer100g": 366,
+      "servingGrams": 26
+    },
+    {
+      "name": "AU Fixture Food 068",
+      "brand": "Fixture AU",
+      "barcode": "9300000000067",
+      "kilojoulesPer100g": 367,
+      "servingGrams": 27
+    },
+    {
+      "name": "AU Fixture Food 069",
+      "brand": "Fixture AU",
+      "barcode": "9300000000068",
+      "kilojoulesPer100g": 368,
+      "servingGrams": 28
+    },
+    {
+      "name": "AU Fixture Food 070",
+      "brand": "Fixture AU",
+      "barcode": "9300000000069",
+      "kilojoulesPer100g": 369,
+      "servingGrams": 29
+    },
+    {
+      "name": "AU Fixture Food 071",
+      "brand": "Fixture AU",
+      "barcode": "9300000000070",
+      "kilojoulesPer100g": 370,
+      "servingGrams": 20
+    },
+    {
+      "name": "AU Fixture Food 072",
+      "brand": "Fixture AU",
+      "barcode": "9300000000071",
+      "kilojoulesPer100g": 371,
+      "servingGrams": 21
+    },
+    {
+      "name": "AU Fixture Food 073",
+      "brand": "Fixture AU",
+      "barcode": "9300000000072",
+      "kilojoulesPer100g": 372,
+      "servingGrams": 22
+    },
+    {
+      "name": "AU Fixture Food 074",
+      "brand": "Fixture AU",
+      "barcode": "9300000000073",
+      "kilojoulesPer100g": 373,
+      "servingGrams": 23
+    },
+    {
+      "name": "AU Fixture Food 075",
+      "brand": "Fixture AU",
+      "barcode": "9300000000074",
+      "kilojoulesPer100g": 374,
+      "servingGrams": 24
+    },
+    {
+      "name": "AU Fixture Food 076",
+      "brand": "Fixture AU",
+      "barcode": "9300000000075",
+      "kilojoulesPer100g": 375,
+      "servingGrams": 25
+    },
+    {
+      "name": "AU Fixture Food 077",
+      "brand": "Fixture AU",
+      "barcode": "9300000000076",
+      "kilojoulesPer100g": 376,
+      "servingGrams": 26
+    },
+    {
+      "name": "AU Fixture Food 078",
+      "brand": "Fixture AU",
+      "barcode": "9300000000077",
+      "kilojoulesPer100g": 377,
+      "servingGrams": 27
+    },
+    {
+      "name": "AU Fixture Food 079",
+      "brand": "Fixture AU",
+      "barcode": "9300000000078",
+      "kilojoulesPer100g": 378,
+      "servingGrams": 28
+    },
+    {
+      "name": "AU Fixture Food 080",
+      "brand": "Fixture AU",
+      "barcode": "9300000000079",
+      "kilojoulesPer100g": 379,
+      "servingGrams": 29
+    },
+    {
+      "name": "AU Fixture Food 081",
+      "brand": "Fixture AU",
+      "barcode": "9300000000080",
+      "kilojoulesPer100g": 380,
+      "servingGrams": 20
+    },
+    {
+      "name": "AU Fixture Food 082",
+      "brand": "Fixture AU",
+      "barcode": "9300000000081",
+      "kilojoulesPer100g": 381,
+      "servingGrams": 21
+    },
+    {
+      "name": "AU Fixture Food 083",
+      "brand": "Fixture AU",
+      "barcode": "9300000000082",
+      "kilojoulesPer100g": 382,
+      "servingGrams": 22
+    },
+    {
+      "name": "AU Fixture Food 084",
+      "brand": "Fixture AU",
+      "barcode": "9300000000083",
+      "kilojoulesPer100g": 383,
+      "servingGrams": 23
+    },
+    {
+      "name": "AU Fixture Food 085",
+      "brand": "Fixture AU",
+      "barcode": "9300000000084",
+      "kilojoulesPer100g": 384,
+      "servingGrams": 24
+    },
+    {
+      "name": "AU Fixture Food 086",
+      "brand": "Fixture AU",
+      "barcode": "9300000000085",
+      "kilojoulesPer100g": 385,
+      "servingGrams": 25
+    },
+    {
+      "name": "AU Fixture Food 087",
+      "brand": "Fixture AU",
+      "barcode": "9300000000086",
+      "kilojoulesPer100g": 386,
+      "servingGrams": 26
+    },
+    {
+      "name": "AU Fixture Food 088",
+      "brand": "Fixture AU",
+      "barcode": "9300000000087",
+      "kilojoulesPer100g": 387,
+      "servingGrams": 27
+    },
+    {
+      "name": "AU Fixture Food 089",
+      "brand": "Fixture AU",
+      "barcode": "9300000000088",
+      "kilojoulesPer100g": 388,
+      "servingGrams": 28
+    },
+    {
+      "name": "AU Fixture Food 090",
+      "brand": "Fixture AU",
+      "barcode": "9300000000089",
+      "kilojoulesPer100g": 389,
+      "servingGrams": 29
+    },
+    {
+      "name": "AU Fixture Food 091",
+      "brand": "Fixture AU",
+      "barcode": "9300000000090",
+      "kilojoulesPer100g": 390,
+      "servingGrams": 20
+    },
+    {
+      "name": "AU Fixture Food 092",
+      "brand": "Fixture AU",
+      "barcode": "9300000000091",
+      "kilojoulesPer100g": 391,
+      "servingGrams": 21
+    },
+    {
+      "name": "AU Fixture Food 093",
+      "brand": "Fixture AU",
+      "barcode": "9300000000092",
+      "kilojoulesPer100g": 392,
+      "servingGrams": 22
+    },
+    {
+      "name": "AU Fixture Food 094",
+      "brand": "Fixture AU",
+      "barcode": "9300000000093",
+      "kilojoulesPer100g": 393,
+      "servingGrams": 23
+    },
+    {
+      "name": "AU Fixture Food 095",
+      "brand": "Fixture AU",
+      "barcode": "9300000000094",
+      "kilojoulesPer100g": 394,
+      "servingGrams": 24
+    },
+    {
+      "name": "AU Fixture Food 096",
+      "brand": "Fixture AU",
+      "barcode": "9300000000095",
+      "kilojoulesPer100g": 395,
+      "servingGrams": 25
+    },
+    {
+      "name": "AU Fixture Food 097",
+      "brand": "Fixture AU",
+      "barcode": "9300000000096",
+      "kilojoulesPer100g": 396,
+      "servingGrams": 26
+    },
+    {
+      "name": "AU Fixture Food 098",
+      "brand": "Fixture AU",
+      "barcode": "9300000000097",
+      "kilojoulesPer100g": 397,
+      "servingGrams": 27
+    },
+    {
+      "name": "AU Fixture Food 099",
+      "brand": "Fixture AU",
+      "barcode": "9300000000098",
+      "kilojoulesPer100g": 398,
+      "servingGrams": 28
+    },
+    {
+      "name": "AU Fixture Food 100",
+      "brand": "Fixture AU",
+      "barcode": "9300000000099",
+      "kilojoulesPer100g": 399,
+      "servingGrams": 29
+    },
+    {
+      "name": "AU Fixture Food 101",
+      "brand": "Fixture AU",
+      "barcode": "9300000000100",
+      "kilojoulesPer100g": 400,
+      "servingGrams": 20
+    },
+    {
+      "name": "AU Fixture Food 102",
+      "brand": "Fixture AU",
+      "barcode": "9300000000101",
+      "kilojoulesPer100g": 401,
+      "servingGrams": 21
+    },
+    {
+      "name": "AU Fixture Food 103",
+      "brand": "Fixture AU",
+      "barcode": "9300000000102",
+      "kilojoulesPer100g": 402,
+      "servingGrams": 22
+    },
+    {
+      "name": "AU Fixture Food 104",
+      "brand": "Fixture AU",
+      "barcode": "9300000000103",
+      "kilojoulesPer100g": 403,
+      "servingGrams": 23
+    },
+    {
+      "name": "AU Fixture Food 105",
+      "brand": "Fixture AU",
+      "barcode": "9300000000104",
+      "kilojoulesPer100g": 404,
+      "servingGrams": 24
+    },
+    {
+      "name": "AU Fixture Food 106",
+      "brand": "Fixture AU",
+      "barcode": "9300000000105",
+      "kilojoulesPer100g": 405,
+      "servingGrams": 25
+    },
+    {
+      "name": "AU Fixture Food 107",
+      "brand": "Fixture AU",
+      "barcode": "9300000000106",
+      "kilojoulesPer100g": 406,
+      "servingGrams": 26
+    },
+    {
+      "name": "AU Fixture Food 108",
+      "brand": "Fixture AU",
+      "barcode": "9300000000107",
+      "kilojoulesPer100g": 407,
+      "servingGrams": 27
+    },
+    {
+      "name": "AU Fixture Food 109",
+      "brand": "Fixture AU",
+      "barcode": "9300000000108",
+      "kilojoulesPer100g": 408,
+      "servingGrams": 28
+    },
+    {
+      "name": "AU Fixture Food 110",
+      "brand": "Fixture AU",
+      "barcode": "9300000000109",
+      "kilojoulesPer100g": 409,
+      "servingGrams": 29
+    },
+    {
+      "name": "AU Fixture Food 111",
+      "brand": "Fixture AU",
+      "barcode": "9300000000110",
+      "kilojoulesPer100g": 410,
+      "servingGrams": 20
+    },
+    {
+      "name": "AU Fixture Food 112",
+      "brand": "Fixture AU",
+      "barcode": "9300000000111",
+      "kilojoulesPer100g": 411,
+      "servingGrams": 21
+    },
+    {
+      "name": "AU Fixture Food 113",
+      "brand": "Fixture AU",
+      "barcode": "9300000000112",
+      "kilojoulesPer100g": 412,
+      "servingGrams": 22
+    },
+    {
+      "name": "AU Fixture Food 114",
+      "brand": "Fixture AU",
+      "barcode": "9300000000113",
+      "kilojoulesPer100g": 413,
+      "servingGrams": 23
+    },
+    {
+      "name": "AU Fixture Food 115",
+      "brand": "Fixture AU",
+      "barcode": "9300000000114",
+      "kilojoulesPer100g": 414,
+      "servingGrams": 24
+    },
+    {
+      "name": "AU Fixture Food 116",
+      "brand": "Fixture AU",
+      "barcode": "9300000000115",
+      "kilojoulesPer100g": 415,
+      "servingGrams": 25
+    },
+    {
+      "name": "AU Fixture Food 117",
+      "brand": "Fixture AU",
+      "barcode": "9300000000116",
+      "kilojoulesPer100g": 416,
+      "servingGrams": 26
+    },
+    {
+      "name": "AU Fixture Food 118",
+      "brand": "Fixture AU",
+      "barcode": "9300000000117",
+      "kilojoulesPer100g": 417,
+      "servingGrams": 27
+    },
+    {
+      "name": "AU Fixture Food 119",
+      "brand": "Fixture AU",
+      "barcode": "9300000000118",
+      "kilojoulesPer100g": 418,
+      "servingGrams": 28
+    },
+    {
+      "name": "AU Fixture Food 120",
+      "brand": "Fixture AU",
+      "barcode": "9300000000119",
+      "kilojoulesPer100g": 419,
+      "servingGrams": 29
+    },
+    {
+      "name": "AU Fixture Food 121",
+      "brand": "Fixture AU",
+      "barcode": "9300000000120",
+      "kilojoulesPer100g": 420,
+      "servingGrams": 20
+    },
+    {
+      "name": "AU Fixture Food 122",
+      "brand": "Fixture AU",
+      "barcode": "9300000000121",
+      "kilojoulesPer100g": 421,
+      "servingGrams": 21
+    },
+    {
+      "name": "AU Fixture Food 123",
+      "brand": "Fixture AU",
+      "barcode": "9300000000122",
+      "kilojoulesPer100g": 422,
+      "servingGrams": 22
+    },
+    {
+      "name": "AU Fixture Food 124",
+      "brand": "Fixture AU",
+      "barcode": "9300000000123",
+      "kilojoulesPer100g": 423,
+      "servingGrams": 23
+    },
+    {
+      "name": "AU Fixture Food 125",
+      "brand": "Fixture AU",
+      "barcode": "9300000000124",
+      "kilojoulesPer100g": 424,
+      "servingGrams": 24
+    },
+    {
+      "name": "AU Fixture Food 126",
+      "brand": "Fixture AU",
+      "barcode": "9300000000125",
+      "kilojoulesPer100g": 425,
+      "servingGrams": 25
+    },
+    {
+      "name": "AU Fixture Food 127",
+      "brand": "Fixture AU",
+      "barcode": "9300000000126",
+      "kilojoulesPer100g": 426,
+      "servingGrams": 26
+    },
+    {
+      "name": "AU Fixture Food 128",
+      "brand": "Fixture AU",
+      "barcode": "9300000000127",
+      "kilojoulesPer100g": 427,
+      "servingGrams": 27
+    },
+    {
+      "name": "AU Fixture Food 129",
+      "brand": "Fixture AU",
+      "barcode": "9300000000128",
+      "kilojoulesPer100g": 428,
+      "servingGrams": 28
+    },
+    {
+      "name": "AU Fixture Food 130",
+      "brand": "Fixture AU",
+      "barcode": "9300000000129",
+      "kilojoulesPer100g": 429,
+      "servingGrams": 29
+    },
+    {
+      "name": "AU Fixture Food 131",
+      "brand": "Fixture AU",
+      "barcode": "9300000000130",
+      "kilojoulesPer100g": 430,
+      "servingGrams": 20
+    },
+    {
+      "name": "AU Fixture Food 132",
+      "brand": "Fixture AU",
+      "barcode": "9300000000131",
+      "kilojoulesPer100g": 431,
+      "servingGrams": 21
+    },
+    {
+      "name": "AU Fixture Food 133",
+      "brand": "Fixture AU",
+      "barcode": "9300000000132",
+      "kilojoulesPer100g": 432,
+      "servingGrams": 22
+    },
+    {
+      "name": "AU Fixture Food 134",
+      "brand": "Fixture AU",
+      "barcode": "9300000000133",
+      "kilojoulesPer100g": 433,
+      "servingGrams": 23
+    },
+    {
+      "name": "AU Fixture Food 135",
+      "brand": "Fixture AU",
+      "barcode": "9300000000134",
+      "kilojoulesPer100g": 434,
+      "servingGrams": 24
+    },
+    {
+      "name": "AU Fixture Food 136",
+      "brand": "Fixture AU",
+      "barcode": "9300000000135",
+      "kilojoulesPer100g": 435,
+      "servingGrams": 25
+    },
+    {
+      "name": "AU Fixture Food 137",
+      "brand": "Fixture AU",
+      "barcode": "9300000000136",
+      "kilojoulesPer100g": 436,
+      "servingGrams": 26
+    },
+    {
+      "name": "AU Fixture Food 138",
+      "brand": "Fixture AU",
+      "barcode": "9300000000137",
+      "kilojoulesPer100g": 437,
+      "servingGrams": 27
+    },
+    {
+      "name": "AU Fixture Food 139",
+      "brand": "Fixture AU",
+      "barcode": "9300000000138",
+      "kilojoulesPer100g": 438,
+      "servingGrams": 28
+    },
+    {
+      "name": "AU Fixture Food 140",
+      "brand": "Fixture AU",
+      "barcode": "9300000000139",
+      "kilojoulesPer100g": 439,
+      "servingGrams": 29
+    },
+    {
+      "name": "AU Fixture Food 141",
+      "brand": "Fixture AU",
+      "barcode": "9300000000140",
+      "kilojoulesPer100g": 440,
+      "servingGrams": 20
+    },
+    {
+      "name": "AU Fixture Food 142",
+      "brand": "Fixture AU",
+      "barcode": "9300000000141",
+      "kilojoulesPer100g": 441,
+      "servingGrams": 21
+    },
+    {
+      "name": "AU Fixture Food 143",
+      "brand": "Fixture AU",
+      "barcode": "9300000000142",
+      "kilojoulesPer100g": 442,
+      "servingGrams": 22
+    },
+    {
+      "name": "AU Fixture Food 144",
+      "brand": "Fixture AU",
+      "barcode": "9300000000143",
+      "kilojoulesPer100g": 443,
+      "servingGrams": 23
+    },
+    {
+      "name": "AU Fixture Food 145",
+      "brand": "Fixture AU",
+      "barcode": "9300000000144",
+      "kilojoulesPer100g": 444,
+      "servingGrams": 24
+    },
+    {
+      "name": "AU Fixture Food 146",
+      "brand": "Fixture AU",
+      "barcode": "9300000000145",
+      "kilojoulesPer100g": 445,
+      "servingGrams": 25
+    },
+    {
+      "name": "AU Fixture Food 147",
+      "brand": "Fixture AU",
+      "barcode": "9300000000146",
+      "kilojoulesPer100g": 446,
+      "servingGrams": 26
+    },
+    {
+      "name": "AU Fixture Food 148",
+      "brand": "Fixture AU",
+      "barcode": "9300000000147",
+      "kilojoulesPer100g": 447,
+      "servingGrams": 27
+    },
+    {
+      "name": "AU Fixture Food 149",
+      "brand": "Fixture AU",
+      "barcode": "9300000000148",
+      "kilojoulesPer100g": 448,
+      "servingGrams": 28
+    },
+    {
+      "name": "AU Fixture Food 150",
+      "brand": "Fixture AU",
+      "barcode": "9300000000149",
+      "kilojoulesPer100g": 449,
+      "servingGrams": 29
+    },
+    {
+      "name": "AU Fixture Food 151",
+      "brand": "Fixture AU",
+      "barcode": "9300000000150",
+      "kilojoulesPer100g": 450,
+      "servingGrams": 20
+    },
+    {
+      "name": "AU Fixture Food 152",
+      "brand": "Fixture AU",
+      "barcode": "9300000000151",
+      "kilojoulesPer100g": 451,
+      "servingGrams": 21
+    },
+    {
+      "name": "AU Fixture Food 153",
+      "brand": "Fixture AU",
+      "barcode": "9300000000152",
+      "kilojoulesPer100g": 452,
+      "servingGrams": 22
+    },
+    {
+      "name": "AU Fixture Food 154",
+      "brand": "Fixture AU",
+      "barcode": "9300000000153",
+      "kilojoulesPer100g": 453,
+      "servingGrams": 23
+    },
+    {
+      "name": "AU Fixture Food 155",
+      "brand": "Fixture AU",
+      "barcode": "9300000000154",
+      "kilojoulesPer100g": 454,
+      "servingGrams": 24
+    },
+    {
+      "name": "AU Fixture Food 156",
+      "brand": "Fixture AU",
+      "barcode": "9300000000155",
+      "kilojoulesPer100g": 455,
+      "servingGrams": 25
+    },
+    {
+      "name": "AU Fixture Food 157",
+      "brand": "Fixture AU",
+      "barcode": "9300000000156",
+      "kilojoulesPer100g": 456,
+      "servingGrams": 26
+    },
+    {
+      "name": "AU Fixture Food 158",
+      "brand": "Fixture AU",
+      "barcode": "9300000000157",
+      "kilojoulesPer100g": 457,
+      "servingGrams": 27
+    },
+    {
+      "name": "AU Fixture Food 159",
+      "brand": "Fixture AU",
+      "barcode": "9300000000158",
+      "kilojoulesPer100g": 458,
+      "servingGrams": 28
+    },
+    {
+      "name": "AU Fixture Food 160",
+      "brand": "Fixture AU",
+      "barcode": "9300000000159",
+      "kilojoulesPer100g": 459,
+      "servingGrams": 29
+    },
+    {
+      "name": "AU Fixture Food 161",
+      "brand": "Fixture AU",
+      "barcode": "9300000000160",
+      "kilojoulesPer100g": 460,
+      "servingGrams": 20
+    },
+    {
+      "name": "AU Fixture Food 162",
+      "brand": "Fixture AU",
+      "barcode": "9300000000161",
+      "kilojoulesPer100g": 461,
+      "servingGrams": 21
+    },
+    {
+      "name": "AU Fixture Food 163",
+      "brand": "Fixture AU",
+      "barcode": "9300000000162",
+      "kilojoulesPer100g": 462,
+      "servingGrams": 22
+    },
+    {
+      "name": "AU Fixture Food 164",
+      "brand": "Fixture AU",
+      "barcode": "9300000000163",
+      "kilojoulesPer100g": 463,
+      "servingGrams": 23
+    },
+    {
+      "name": "AU Fixture Food 165",
+      "brand": "Fixture AU",
+      "barcode": "9300000000164",
+      "kilojoulesPer100g": 464,
+      "servingGrams": 24
+    },
+    {
+      "name": "AU Fixture Food 166",
+      "brand": "Fixture AU",
+      "barcode": "9300000000165",
+      "kilojoulesPer100g": 465,
+      "servingGrams": 25
+    },
+    {
+      "name": "AU Fixture Food 167",
+      "brand": "Fixture AU",
+      "barcode": "9300000000166",
+      "kilojoulesPer100g": 466,
+      "servingGrams": 26
+    },
+    {
+      "name": "AU Fixture Food 168",
+      "brand": "Fixture AU",
+      "barcode": "9300000000167",
+      "kilojoulesPer100g": 467,
+      "servingGrams": 27
+    },
+    {
+      "name": "AU Fixture Food 169",
+      "brand": "Fixture AU",
+      "barcode": "9300000000168",
+      "kilojoulesPer100g": 468,
+      "servingGrams": 28
+    },
+    {
+      "name": "AU Fixture Food 170",
+      "brand": "Fixture AU",
+      "barcode": "9300000000169",
+      "kilojoulesPer100g": 469,
+      "servingGrams": 29
+    },
+    {
+      "name": "AU Fixture Food 171",
+      "brand": "Fixture AU",
+      "barcode": "9300000000170",
+      "kilojoulesPer100g": 470,
+      "servingGrams": 20
+    },
+    {
+      "name": "AU Fixture Food 172",
+      "brand": "Fixture AU",
+      "barcode": "9300000000171",
+      "kilojoulesPer100g": 471,
+      "servingGrams": 21
+    },
+    {
+      "name": "AU Fixture Food 173",
+      "brand": "Fixture AU",
+      "barcode": "9300000000172",
+      "kilojoulesPer100g": 472,
+      "servingGrams": 22
+    },
+    {
+      "name": "AU Fixture Food 174",
+      "brand": "Fixture AU",
+      "barcode": "9300000000173",
+      "kilojoulesPer100g": 473,
+      "servingGrams": 23
+    },
+    {
+      "name": "AU Fixture Food 175",
+      "brand": "Fixture AU",
+      "barcode": "9300000000174",
+      "kilojoulesPer100g": 474,
+      "servingGrams": 24
+    },
+    {
+      "name": "AU Fixture Food 176",
+      "brand": "Fixture AU",
+      "barcode": "9300000000175",
+      "kilojoulesPer100g": 475,
+      "servingGrams": 25
+    },
+    {
+      "name": "AU Fixture Food 177",
+      "brand": "Fixture AU",
+      "barcode": "9300000000176",
+      "kilojoulesPer100g": 476,
+      "servingGrams": 26
+    },
+    {
+      "name": "AU Fixture Food 178",
+      "brand": "Fixture AU",
+      "barcode": "9300000000177",
+      "kilojoulesPer100g": 477,
+      "servingGrams": 27
+    },
+    {
+      "name": "AU Fixture Food 179",
+      "brand": "Fixture AU",
+      "barcode": "9300000000178",
+      "kilojoulesPer100g": 478,
+      "servingGrams": 28
+    },
+    {
+      "name": "AU Fixture Food 180",
+      "brand": "Fixture AU",
+      "barcode": "9300000000179",
+      "kilojoulesPer100g": 479,
+      "servingGrams": 29
+    },
+    {
+      "name": "AU Fixture Food 181",
+      "brand": "Fixture AU",
+      "barcode": "9300000000180",
+      "kilojoulesPer100g": 480,
+      "servingGrams": 20
+    },
+    {
+      "name": "AU Fixture Food 182",
+      "brand": "Fixture AU",
+      "barcode": "9300000000181",
+      "kilojoulesPer100g": 481,
+      "servingGrams": 21
+    },
+    {
+      "name": "AU Fixture Food 183",
+      "brand": "Fixture AU",
+      "barcode": "9300000000182",
+      "kilojoulesPer100g": 482,
+      "servingGrams": 22
+    },
+    {
+      "name": "AU Fixture Food 184",
+      "brand": "Fixture AU",
+      "barcode": "9300000000183",
+      "kilojoulesPer100g": 483,
+      "servingGrams": 23
+    },
+    {
+      "name": "AU Fixture Food 185",
+      "brand": "Fixture AU",
+      "barcode": "9300000000184",
+      "kilojoulesPer100g": 484,
+      "servingGrams": 24
+    },
+    {
+      "name": "AU Fixture Food 186",
+      "brand": "Fixture AU",
+      "barcode": "9300000000185",
+      "kilojoulesPer100g": 485,
+      "servingGrams": 25
+    },
+    {
+      "name": "AU Fixture Food 187",
+      "brand": "Fixture AU",
+      "barcode": "9300000000186",
+      "kilojoulesPer100g": 486,
+      "servingGrams": 26
+    },
+    {
+      "name": "AU Fixture Food 188",
+      "brand": "Fixture AU",
+      "barcode": "9300000000187",
+      "kilojoulesPer100g": 487,
+      "servingGrams": 27
+    },
+    {
+      "name": "AU Fixture Food 189",
+      "brand": "Fixture AU",
+      "barcode": "9300000000188",
+      "kilojoulesPer100g": 488,
+      "servingGrams": 28
+    },
+    {
+      "name": "AU Fixture Food 190",
+      "brand": "Fixture AU",
+      "barcode": "9300000000189",
+      "kilojoulesPer100g": 489,
+      "servingGrams": 29
+    },
+    {
+      "name": "AU Fixture Food 191",
+      "brand": "Fixture AU",
+      "barcode": "9300000000190",
+      "kilojoulesPer100g": 490,
+      "servingGrams": 20
+    },
+    {
+      "name": "AU Fixture Food 192",
+      "brand": "Fixture AU",
+      "barcode": "9300000000191",
+      "kilojoulesPer100g": 491,
+      "servingGrams": 21
+    },
+    {
+      "name": "AU Fixture Food 193",
+      "brand": "Fixture AU",
+      "barcode": "9300000000192",
+      "kilojoulesPer100g": 492,
+      "servingGrams": 22
+    },
+    {
+      "name": "AU Fixture Food 194",
+      "brand": "Fixture AU",
+      "barcode": "9300000000193",
+      "kilojoulesPer100g": 493,
+      "servingGrams": 23
+    },
+    {
+      "name": "AU Fixture Food 195",
+      "brand": "Fixture AU",
+      "barcode": "9300000000194",
+      "kilojoulesPer100g": 494,
+      "servingGrams": 24
+    },
+    {
+      "name": "AU Fixture Food 196",
+      "brand": "Fixture AU",
+      "barcode": "9300000000195",
+      "kilojoulesPer100g": 495,
+      "servingGrams": 25
+    },
+    {
+      "name": "AU Fixture Food 197",
+      "brand": "Fixture AU",
+      "barcode": "9300000000196",
+      "kilojoulesPer100g": 496,
+      "servingGrams": 26
+    },
+    {
+      "name": "AU Fixture Food 198",
+      "brand": "Fixture AU",
+      "barcode": "9300000000197",
+      "kilojoulesPer100g": 497,
+      "servingGrams": 27
+    },
+    {
+      "name": "AU Fixture Food 199",
+      "brand": "Fixture AU",
+      "barcode": "9300000000198",
+      "kilojoulesPer100g": 498,
+      "servingGrams": 28
+    },
+    {
+      "name": "AU Fixture Food 200",
+      "brand": "Fixture AU",
+      "barcode": "9300000000199",
+      "kilojoulesPer100g": 499,
+      "servingGrams": 29
+    },
+    {
+      "name": "AU Fixture Food 201",
+      "brand": "Fixture AU",
+      "barcode": "9300000000200",
+      "kilojoulesPer100g": 500,
+      "servingGrams": 20
+    },
+    {
+      "name": "AU Fixture Food 202",
+      "brand": "Fixture AU",
+      "barcode": "9300000000201",
+      "kilojoulesPer100g": 501,
+      "servingGrams": 21
+    },
+    {
+      "name": "AU Fixture Food 203",
+      "brand": "Fixture AU",
+      "barcode": "9300000000202",
+      "kilojoulesPer100g": 502,
+      "servingGrams": 22
+    },
+    {
+      "name": "AU Fixture Food 204",
+      "brand": "Fixture AU",
+      "barcode": "9300000000203",
+      "kilojoulesPer100g": 503,
+      "servingGrams": 23
+    },
+    {
+      "name": "AU Fixture Food 205",
+      "brand": "Fixture AU",
+      "barcode": "9300000000204",
+      "kilojoulesPer100g": 504,
+      "servingGrams": 24
+    },
+    {
+      "name": "AU Fixture Food 206",
+      "brand": "Fixture AU",
+      "barcode": "9300000000205",
+      "kilojoulesPer100g": 505,
+      "servingGrams": 25
+    },
+    {
+      "name": "AU Fixture Food 207",
+      "brand": "Fixture AU",
+      "barcode": "9300000000206",
+      "kilojoulesPer100g": 506,
+      "servingGrams": 26
+    },
+    {
+      "name": "AU Fixture Food 208",
+      "brand": "Fixture AU",
+      "barcode": "9300000000207",
+      "kilojoulesPer100g": 507,
+      "servingGrams": 27
+    },
+    {
+      "name": "AU Fixture Food 209",
+      "brand": "Fixture AU",
+      "barcode": "9300000000208",
+      "kilojoulesPer100g": 508,
+      "servingGrams": 28
+    },
+    {
+      "name": "AU Fixture Food 210",
+      "brand": "Fixture AU",
+      "barcode": "9300000000209",
+      "kilojoulesPer100g": 509,
+      "servingGrams": 29
+    },
+    {
+      "name": "AU Fixture Food 211",
+      "brand": "Fixture AU",
+      "barcode": "9300000000210",
+      "kilojoulesPer100g": 510,
+      "servingGrams": 20
+    },
+    {
+      "name": "AU Fixture Food 212",
+      "brand": "Fixture AU",
+      "barcode": "9300000000211",
+      "kilojoulesPer100g": 511,
+      "servingGrams": 21
+    },
+    {
+      "name": "AU Fixture Food 213",
+      "brand": "Fixture AU",
+      "barcode": "9300000000212",
+      "kilojoulesPer100g": 512,
+      "servingGrams": 22
+    },
+    {
+      "name": "AU Fixture Food 214",
+      "brand": "Fixture AU",
+      "barcode": "9300000000213",
+      "kilojoulesPer100g": 513,
+      "servingGrams": 23
+    },
+    {
+      "name": "AU Fixture Food 215",
+      "brand": "Fixture AU",
+      "barcode": "9300000000214",
+      "kilojoulesPer100g": 514,
+      "servingGrams": 24
+    },
+    {
+      "name": "AU Fixture Food 216",
+      "brand": "Fixture AU",
+      "barcode": "9300000000215",
+      "kilojoulesPer100g": 515,
+      "servingGrams": 25
+    },
+    {
+      "name": "AU Fixture Food 217",
+      "brand": "Fixture AU",
+      "barcode": "9300000000216",
+      "kilojoulesPer100g": 516,
+      "servingGrams": 26
+    },
+    {
+      "name": "AU Fixture Food 218",
+      "brand": "Fixture AU",
+      "barcode": "9300000000217",
+      "kilojoulesPer100g": 517,
+      "servingGrams": 27
+    },
+    {
+      "name": "AU Fixture Food 219",
+      "brand": "Fixture AU",
+      "barcode": "9300000000218",
+      "kilojoulesPer100g": 518,
+      "servingGrams": 28
+    },
+    {
+      "name": "AU Fixture Food 220",
+      "brand": "Fixture AU",
+      "barcode": "9300000000219",
+      "kilojoulesPer100g": 519,
+      "servingGrams": 29
+    },
+    {
+      "name": "AU Fixture Food 221",
+      "brand": "Fixture AU",
+      "barcode": "9300000000220",
+      "kilojoulesPer100g": 520,
+      "servingGrams": 20
+    },
+    {
+      "name": "AU Fixture Food 222",
+      "brand": "Fixture AU",
+      "barcode": "9300000000221",
+      "kilojoulesPer100g": 521,
+      "servingGrams": 21
+    },
+    {
+      "name": "AU Fixture Food 223",
+      "brand": "Fixture AU",
+      "barcode": "9300000000222",
+      "kilojoulesPer100g": 522,
+      "servingGrams": 22
+    },
+    {
+      "name": "AU Fixture Food 224",
+      "brand": "Fixture AU",
+      "barcode": "9300000000223",
+      "kilojoulesPer100g": 523,
+      "servingGrams": 23
+    },
+    {
+      "name": "AU Fixture Food 225",
+      "brand": "Fixture AU",
+      "barcode": "9300000000224",
+      "kilojoulesPer100g": 524,
+      "servingGrams": 24
+    },
+    {
+      "name": "AU Fixture Food 226",
+      "brand": "Fixture AU",
+      "barcode": "9300000000225",
+      "kilojoulesPer100g": 525,
+      "servingGrams": 25
+    },
+    {
+      "name": "AU Fixture Food 227",
+      "brand": "Fixture AU",
+      "barcode": "9300000000226",
+      "kilojoulesPer100g": 526,
+      "servingGrams": 26
+    },
+    {
+      "name": "AU Fixture Food 228",
+      "brand": "Fixture AU",
+      "barcode": "9300000000227",
+      "kilojoulesPer100g": 527,
+      "servingGrams": 27
+    },
+    {
+      "name": "AU Fixture Food 229",
+      "brand": "Fixture AU",
+      "barcode": "9300000000228",
+      "kilojoulesPer100g": 528,
+      "servingGrams": 28
+    },
+    {
+      "name": "AU Fixture Food 230",
+      "brand": "Fixture AU",
+      "barcode": "9300000000229",
+      "kilojoulesPer100g": 529,
+      "servingGrams": 29
+    },
+    {
+      "name": "AU Fixture Food 231",
+      "brand": "Fixture AU",
+      "barcode": "9300000000230",
+      "kilojoulesPer100g": 530,
+      "servingGrams": 20
+    },
+    {
+      "name": "AU Fixture Food 232",
+      "brand": "Fixture AU",
+      "barcode": "9300000000231",
+      "kilojoulesPer100g": 531,
+      "servingGrams": 21
+    },
+    {
+      "name": "AU Fixture Food 233",
+      "brand": "Fixture AU",
+      "barcode": "9300000000232",
+      "kilojoulesPer100g": 532,
+      "servingGrams": 22
+    },
+    {
+      "name": "AU Fixture Food 234",
+      "brand": "Fixture AU",
+      "barcode": "9300000000233",
+      "kilojoulesPer100g": 533,
+      "servingGrams": 23
+    },
+    {
+      "name": "AU Fixture Food 235",
+      "brand": "Fixture AU",
+      "barcode": "9300000000234",
+      "kilojoulesPer100g": 534,
+      "servingGrams": 24
+    },
+    {
+      "name": "AU Fixture Food 236",
+      "brand": "Fixture AU",
+      "barcode": "9300000000235",
+      "kilojoulesPer100g": 535,
+      "servingGrams": 25
+    },
+    {
+      "name": "AU Fixture Food 237",
+      "brand": "Fixture AU",
+      "barcode": "9300000000236",
+      "kilojoulesPer100g": 536,
+      "servingGrams": 26
+    },
+    {
+      "name": "AU Fixture Food 238",
+      "brand": "Fixture AU",
+      "barcode": "9300000000237",
+      "kilojoulesPer100g": 537,
+      "servingGrams": 27
+    },
+    {
+      "name": "AU Fixture Food 239",
+      "brand": "Fixture AU",
+      "barcode": "9300000000238",
+      "kilojoulesPer100g": 538,
+      "servingGrams": 28
+    },
+    {
+      "name": "AU Fixture Food 240",
+      "brand": "Fixture AU",
+      "barcode": "9300000000239",
+      "kilojoulesPer100g": 539,
+      "servingGrams": 29
+    },
+    {
+      "name": "AU Fixture Food 241",
+      "brand": "Fixture AU",
+      "barcode": "9300000000240",
+      "kilojoulesPer100g": 540,
+      "servingGrams": 20
+    },
+    {
+      "name": "AU Fixture Food 242",
+      "brand": "Fixture AU",
+      "barcode": "9300000000241",
+      "kilojoulesPer100g": 541,
+      "servingGrams": 21
+    },
+    {
+      "name": "AU Fixture Food 243",
+      "brand": "Fixture AU",
+      "barcode": "9300000000242",
+      "kilojoulesPer100g": 542,
+      "servingGrams": 22
+    },
+    {
+      "name": "AU Fixture Food 244",
+      "brand": "Fixture AU",
+      "barcode": "9300000000243",
+      "kilojoulesPer100g": 543,
+      "servingGrams": 23
+    },
+    {
+      "name": "AU Fixture Food 245",
+      "brand": "Fixture AU",
+      "barcode": "9300000000244",
+      "kilojoulesPer100g": 544,
+      "servingGrams": 24
+    },
+    {
+      "name": "AU Fixture Food 246",
+      "brand": "Fixture AU",
+      "barcode": "9300000000245",
+      "kilojoulesPer100g": 545,
+      "servingGrams": 25
+    },
+    {
+      "name": "AU Fixture Food 247",
+      "brand": "Fixture AU",
+      "barcode": "9300000000246",
+      "kilojoulesPer100g": 546,
+      "servingGrams": 26
+    },
+    {
+      "name": "AU Fixture Food 248",
+      "brand": "Fixture AU",
+      "barcode": "9300000000247",
+      "kilojoulesPer100g": 547,
+      "servingGrams": 27
+    },
+    {
+      "name": "AU Fixture Food 249",
+      "brand": "Fixture AU",
+      "barcode": "9300000000248",
+      "kilojoulesPer100g": 548,
+      "servingGrams": 28
+    },
+    {
+      "name": "AU Fixture Food 250",
+      "brand": "Fixture AU",
+      "barcode": "9300000000249",
+      "kilojoulesPer100g": 549,
+      "servingGrams": 29
+    },
+    {
+      "name": "AU Fixture Food 251",
+      "brand": "Fixture AU",
+      "barcode": "9300000000250",
+      "kilojoulesPer100g": 550,
+      "servingGrams": 20
+    },
+    {
+      "name": "AU Fixture Food 252",
+      "brand": "Fixture AU",
+      "barcode": "9300000000251",
+      "kilojoulesPer100g": 551,
+      "servingGrams": 21
+    },
+    {
+      "name": "AU Fixture Food 253",
+      "brand": "Fixture AU",
+      "barcode": "9300000000252",
+      "kilojoulesPer100g": 552,
+      "servingGrams": 22
+    },
+    {
+      "name": "AU Fixture Food 254",
+      "brand": "Fixture AU",
+      "barcode": "9300000000253",
+      "kilojoulesPer100g": 553,
+      "servingGrams": 23
+    },
+    {
+      "name": "AU Fixture Food 255",
+      "brand": "Fixture AU",
+      "barcode": "9300000000254",
+      "kilojoulesPer100g": 554,
+      "servingGrams": 24
+    },
+    {
+      "name": "AU Fixture Food 256",
+      "brand": "Fixture AU",
+      "barcode": "9300000000255",
+      "kilojoulesPer100g": 555,
+      "servingGrams": 25
+    }
+  ]
+}
+
