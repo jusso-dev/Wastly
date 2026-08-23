@@ -51,6 +51,14 @@ public struct FactLLMPayload: Codable, Equatable, Sendable {
     public var wastedG: Double
     public var topFood: String?
 
+    enum CodingKeys: String, CodingKey {
+        case firstName = "first_name"
+        case days
+        case eatenG = "eaten_g"
+        case wastedG = "wasted_g"
+        case topFood = "top_food"
+    }
+
     public init(firstName: String? = nil, days: Int, eatenG: Double, wastedG: Double, topFood: String? = nil) {
         self.firstName = firstName
         self.days = days

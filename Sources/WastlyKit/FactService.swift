@@ -119,9 +119,25 @@ public enum FactCachePolicy: Sendable {
         now: Date = .now,
         calendar: Calendar = .current
     ) -> Bool {
+        shouldRegenerate(
+            cachedInputsHash: cachedInputsHash,
+            cachedAt: cachedAt,
+            currentInputsHash: totals.inputsHash,
+            now: now,
+            calendar: calendar
+        )
+    }
+
+    public static func shouldRegenerate(
+        cachedInputsHash: String?,
+        cachedAt: Date?,
+        currentInputsHash: String,
+        now: Date = .now,
+        calendar: Calendar = .current
+    ) -> Bool {
         guard let cachedInputsHash, let cachedAt else { return true }
         guard calendar.isDate(cachedAt, inSameDayAs: now) else { return true }
-        return cachedInputsHash != totals.inputsHash
+        return cachedInputsHash != currentInputsHash
     }
 }
 
@@ -169,7 +185,7 @@ public enum FactTemplates: Sendable {
             days: totals.days,
             eatenG: totals.eatenGrams,
             wastedG: totals.wastedGrams,
-            topFood: totals.topFood
+            topFood: totals.normalizedTopFood
         )
         try PrivacyGuard.assertFactPayload(payload)
         return payload
@@ -180,6 +196,7 @@ public enum FactRequestBuilder: Sendable {
     public static func make(
         url: URL,
         configuredHost: String,
+        apiKey: String? = nil,
         totals: FactTotals,
         firstName: String?
     ) throws -> URLRequest {
@@ -192,7 +209,15 @@ public enum FactRequestBuilder: Sendable {
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
+        request.timeoutInterval = 12
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("Wastly/1.0", forHTTPHeaderField: "User-Agent")
+        request.setValue(FactPrompt.version, forHTTPHeaderField: "X-Wastly-Fact-Prompt")
+        if let apiKey = apiKey?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !apiKey.isEmpty {
+            request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        }
         request.httpBody = body
         return request
     }

@@ -25,8 +25,23 @@ struct SettingsView: View {
                     .pickerStyle(.segmented)
                 }
                 Section("Privacy") {
-                    Toggle("LLM facts", isOn: boolBinding(\.llmEnabled))
                     Toggle("Face ID lock", isOn: faceBinding)
+                }
+                Section("Optional online facts") {
+                    Toggle("Generate extra facts online", isOn: boolBinding(\.llmEnabled))
+                    if settings.llmEnabled {
+                        Text("Only aggregate days, eaten grams, wasted grams, top food, and the child’s first name are sent.")
+                            .font(.wastlyCaption)
+                        if session.factGenerator == nil {
+                            Text("No fact service is configured in this build. Offline facts will continue to appear.")
+                                .font(.wastlyCaption)
+                                .foregroundStyle(WastlyTheme.muted)
+                        }
+                    } else {
+                        Text("Off by default. Offline facts do not need a key or internet connection.")
+                            .font(.wastlyCaption)
+                            .foregroundStyle(WastlyTheme.muted)
+                    }
                 }
                 Section("Optional cloud plate match") {
                     Toggle("Send a cropped plate photo", isOn: boolBinding(\.ocrCloudEnabled))
@@ -75,7 +90,7 @@ struct SettingsView: View {
                     }
                 }
                 Section("About") {
-                    Text("Logs stay on this iPhone. Backup uses your iCloud. Food lookup is the only thing that goes to the internet. No ads. No analytics.")
+                    Text("Logs stay on this iPhone. Backup uses your iCloud. Food lookup, online facts, and plate matching use only the network options described above. No ads. No analytics.")
                         .font(.wastlyCaption)
                 }
             }
