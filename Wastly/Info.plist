@@ -24,6 +24,8 @@
 	<true/>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Wastly can lock the diary behind Face ID so another person on this iPad cannot open it.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Wastly uses the camera only to scan a food barcode.</string>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>

@@ -21,6 +21,8 @@ struct LogSheet: View {
     @State private var note = ""
     @State private var barcode = ""
     @State private var searching = false
+    @State private var showingScanner = false
+    @State private var errorMessage: String?
 
     private var unit: EnergyUnit { settingsRows.first?.energyUnit ?? .kilojoules }
     private var child: Child? {
@@ -46,6 +48,20 @@ struct LogSheet: View {
         }
         .tint(WastlyTheme.sage)
         .task { await runSearch() }
+        .fullScreenCover(isPresented: $showingScanner) {
+            BarcodeScannerView(
+                onScanned: { scanned in
+                    barcode = scanned
+                    Task { await runBarcode() }
+                },
+                onFailure: { errorMessage = $0 }
+            )
+        }
+        .alert("Couldn’t add food", isPresented: errorBinding) {
+            Button("OK", role: .cancel) { errorMessage = nil }
+        } message: {
+            Text(errorMessage ?? "Nothing was saved. Try again.")
+        }
     }
 
     private var search: some View {
@@ -58,6 +74,11 @@ struct LogSheet: View {
                     TextField("Barcode", text: $barcode)
                         .keyboardType(.numberPad)
                     Button("Match") { Task { await runBarcode() } }
+                }
+                Button {
+                    Task { await openScanner() }
+                } label: {
+                    Label("Scan barcode with camera", systemImage: "barcode.viewfinder")
                 }
             }
             Section("Recents") {
@@ -98,12 +119,13 @@ struct LogSheet: View {
                         .font(.wastlyCaption)
                         .foregroundStyle(WastlyTheme.muted)
                 }
-                Button {
-                    let name = customName.isEmpty ? (query.isEmpty ? "Custom food" : query) : customName
-                    pick(FoodHit(id: "custom:\(name)", name: name, kilojoulesPer100g: 0, origin: .custom))
-                } label: {
-                    Label("Save a custom food", systemImage: "plus.circle")
+            }
+            Section("Custom food") {
+                TextField("Custom food name", text: $customName)
+                Button(action: pickCustomFood) {
+                    Label("Use custom food", systemImage: "plus.circle")
                 }
+                .disabled(customFoodName == nil)
             }
         }
         .scrollContentBackground(.hidden)
@@ -126,8 +148,8 @@ struct LogSheet: View {
             Section("How much") {
                 stepper("Eaten, grams", value: $eaten)
                 stepper("Left, grams", value: $wasted)
-                Button("They ate it all") { wasted = 0 }
-                Button("None eaten") { eaten = 0 }
+                Button("They ate it all", action: ateAll)
+                Button("None eaten", action: noneEaten)
             }
             Section("Meal") {
                 Picker("Meal", selection: $meal) {
@@ -165,6 +187,20 @@ struct LogSheet: View {
         }
     }
 
+    private var customFoodName: String? {
+        let custom = customName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !custom.isEmpty { return custom }
+        let searched = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        return searched.isEmpty ? nil : searched
+    }
+
+    private var errorBinding: Binding<Bool> {
+        Binding(
+            get: { errorMessage != nil },
+            set: { if !$0 { errorMessage = nil } }
+        )
+    }
+
     private func missCopy(_ miss: FoodLookupMiss) -> String {
         switch miss {
         case .offline: "No signal. Use a recent or save a custom food."
@@ -180,6 +216,28 @@ struct LogSheet: View {
         }
     }
 
+    private func pickCustomFood() {
+        guard let name = customFoodName else { return }
+        pick(FoodHit(
+            id: "custom:\(name)",
+            name: name,
+            kilojoulesPer100g: 0,
+            origin: .custom
+        ))
+    }
+
+    private func ateAll() {
+        let amounts = LogAmountShortcut.ateAll(eaten: eaten, wasted: wasted)
+        eaten = amounts.eaten
+        wasted = amounts.wasted
+    }
+
+    private func noneEaten() {
+        let amounts = LogAmountShortcut.noneEaten(eaten: eaten, wasted: wasted)
+        eaten = amounts.eaten
+        wasted = amounts.wasted
+    }
+
     private func runSearch() async {
         searching = true
         let result = await session.directory.search(query, online: true)
@@ -189,35 +247,58 @@ struct LogSheet: View {
     }
 
     private func runBarcode() async {
+        searching = true
+        defer { searching = false }
         let result = await session.directory.barcode(barcode, online: true)
         hits = result.hits
         miss = result.miss
         if let first = result.hits.first { pick(first) }
     }
 
-    private func save(_ hit: FoodHit) {
-        guard let child else { return }
-        let log = FoodLog(
-            meal: meal,
-            foodName: hit.name,
-            brand: hit.brand,
-            barcodeRaw: hit.barcodeRaw,
-            eatenGrams: eaten,
-            wastedGrams: wasted,
-            offeredGrams: eaten + wasted,
-            kilojoulesPer100g: hit.kilojoulesPer100g,
-            note: note.isEmpty ? nil : note,
-            origin: hit.origin,
-            child: child
-        )
-        context.insert(log)
-        try? context.save()
-        Task {
-            await session.directory.remember(hit)
-            if hit.origin == .custom {
-                await session.directory.saveCustom(hit)
-            }
+    private func openScanner() async {
+        guard BarcodeScannerSupport.isSupported else {
+            errorMessage = "Camera barcode scanning isn’t available on this device. Enter the barcode instead."
+            return
         }
-        dismiss()
+        guard await BarcodeScannerSupport.requestCameraAccess() else {
+            errorMessage = "Camera access is off. Allow it in Settings, or enter the barcode instead."
+            return
+        }
+        guard BarcodeScannerSupport.isAvailable else {
+            errorMessage = "Camera barcode scanning is temporarily unavailable. Enter the barcode instead."
+            return
+        }
+        showingScanner = true
+    }
+
+    private func save(_ hit: FoodHit) {
+        guard let child else {
+            errorMessage = "Choose a child before saving this log."
+            return
+        }
+        do {
+            try FoodLogWriter.save(
+                FoodLogDraft(
+                    hit: hit,
+                    loggedAt: session.diaryDay,
+                    meal: meal,
+                    eatenGrams: eaten,
+                    wastedGrams: wasted,
+                    note: note
+                ),
+                for: child,
+                in: context
+            )
+            Task {
+                await session.directory.remember(hit)
+                if hit.origin == .custom {
+                    await session.directory.saveCustom(hit)
+                }
+            }
+            dismiss()
+        } catch {
+            errorMessage = (error as? LocalizedError)?.errorDescription
+                ?? "Nothing was saved. Check available storage and try again."
+        }
     }
 }
