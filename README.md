@@ -6,18 +6,19 @@
 
 Private offline iOS diary of what a child eats and wastes.
 
-Native SwiftUI. No account. Logs stay on the iPhone. iCloud backup is the parent’s. The only network calls are food lookup and an optional cheap LLM for fun facts.
+Native SwiftUI. No account. Logs stay on the iPhone. iCloud backup is off in this build. The only planned network calls are food lookup (Open Food Facts, USDA) and an optional cheap LLM for fun facts.
 
-App icon: [docs/app-icon.svg](docs/app-icon.svg) (also [docs/app-icon.jpg](docs/app-icon.jpg))
+App icon art: [docs/app-icon.svg](docs/app-icon.svg) and [docs/app-icon.jpg](docs/app-icon.jpg). The Xcode asset is still empty. On this branch the two JPEGs are broken 5-byte links. Main has the real files.
 
 Build prompt: [docs/BUILD.md](docs/BUILD.md)
 
 ## v1
 
 - Eaten and wasted amounts on every log
-- Open Food Facts + USDA FoodData Central
-- On-device Vision for pack labels
+- Local food store first, then Open Food Facts and USDA
 - Fun facts from totals, not from body stats
-- CloudKit private backup, optional password
+- Face ID lock in the shell. No camera. Barcode is type plus Match.
+- CloudKit backup is not on
+- On-device Vision OCR is not on
 
 Not a clinical dietitian. Not MyFitnessPal for adults.
