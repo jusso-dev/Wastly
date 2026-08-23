@@ -122,15 +122,25 @@ struct RecentsCacheTests {
         let calories = try CustomFoodBuilder.make(
             name: "Muesli",
             energyPer100gText: "100",
-            unit: .kilocalories
+            unit: .kilocalories,
+            servingGramsText: "30"
         )
         #expect(abs(calories.kilojoulesPer100g - 418.4) < 0.001)
+        #expect(calories.servingGrams == 30)
 
         #expect(throws: CustomFoodInputError.invalidEnergy) {
             try CustomFoodBuilder.make(
                 name: "Muesli",
                 energyPer100gText: "not a number",
                 unit: .kilojoules
+            )
+        }
+        #expect(throws: CustomFoodInputError.invalidServing) {
+            try CustomFoodBuilder.make(
+                name: "Muesli",
+                energyPer100gText: "100",
+                unit: .kilojoules,
+                servingGramsText: "0"
             )
         }
     }

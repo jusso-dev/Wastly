@@ -1,5 +1,7 @@
+import PhotosUI
 import SwiftData
 import SwiftUI
+import UIKit
 import WastlyKit
 
 struct LogSheet: View {
@@ -14,6 +16,11 @@ struct LogSheet: View {
     @State private var hits: [FoodHit] = []
     @State private var miss: FoodLookupMiss?
     @State private var selected: FoodHit?
+    @State private var labelScan: NutritionLabelScan?
+    @State private var scannedFoodName = ""
+    @State private var scannedEnergyPer100g = ""
+    @State private var scannedServingGrams = ""
+    @State private var selectedLabelPhoto: PhotosPickerItem?
     @State private var customName = ""
     @State private var customEnergyPer100g = ""
     @State private var eaten: Double = 30
@@ -22,7 +29,9 @@ struct LogSheet: View {
     @State private var note = ""
     @State private var barcode = ""
     @State private var searching = false
+    @State private var readingLabel = false
     @State private var showingScanner = false
+    @State private var showingLabelCamera = false
     @State private var errorMessage: String?
 
     private var unit: EnergyUnit { settingsRows.first?.energyUnit ?? .kilojoules }
@@ -57,6 +66,9 @@ struct LogSheet: View {
         }
         .tint(WastlyTheme.sage)
         .task { await runSearch() }
+        .task(id: selectedLabelPhoto) {
+            await loadSelectedLabelPhoto()
+        }
         .fullScreenCover(isPresented: $showingScanner) {
             BarcodeScannerView(
                 onScanned: { scanned in
@@ -66,6 +78,17 @@ struct LogSheet: View {
                 onFailure: { errorMessage = $0 }
             )
         }
+        .fullScreenCover(isPresented: $showingLabelCamera) {
+            LabelCameraPicker(
+                onImage: { data in
+                    showingLabelCamera = false
+                    Task { await readLabel(data) }
+                },
+                onCancel: { showingLabelCamera = false }
+            )
+            .ignoresSafeArea()
+        }
+        .interactiveDismissDisabled(readingLabel)
         .alert("Couldn’t add food", isPresented: errorBinding) {
             Button("OK", role: .cancel) { errorMessage = nil }
         } message: {
@@ -89,6 +112,23 @@ struct LogSheet: View {
                 } label: {
                     Label("Scan barcode with camera", systemImage: "barcode.viewfinder")
                 }
+            }
+            Section("Read a pack label") {
+                Button {
+                    Task { await openLabelCamera() }
+                } label: {
+                    Label("Take label photo", systemImage: "camera")
+                }
+                PhotosPicker(selection: $selectedLabelPhoto, matching: .images) {
+                    Label("Choose label photo", systemImage: "photo.on.rectangle")
+                }
+                if readingLabel {
+                    ProgressView("Reading on this device…")
+                        .font(.wastlyCaption)
+                }
+                Text("Vision runs offline. The photo is processed in memory and is not stored or uploaded.")
+                    .font(.wastlyCaption)
+                    .foregroundStyle(WastlyTheme.muted)
             }
             Section("Recents") {
                 ForEach(recentFoods.prefix(8), id: \.id) { row in
@@ -151,17 +191,21 @@ struct LogSheet: View {
 
     private func confirm(_ hit: FoodHit) -> some View {
         Form {
-            Section(hit.name) {
-                if let brand = hit.brand, !brand.isEmpty {
-                    Text(brand).font(.wastlyCaption)
-                }
-                if hit.origin == .custom, hit.kilojoulesPer100g == 0 {
-                    Text("No energy entered · grams will still be saved")
-                        .font(.wastlyCaption)
-                } else {
-                    Text("\(Energy.display(hit.kilojoulesPer100g, unit: unit)) per 100 g")
-                        .font(.wastlyCaption)
-                        .monospacedDigit()
+            if let labelScan {
+                scannedLabelSection(labelScan)
+            } else {
+                Section(hit.name) {
+                    if let brand = hit.brand, !brand.isEmpty {
+                        Text(brand).font(.wastlyCaption)
+                    }
+                    if hit.origin == .custom, hit.kilojoulesPer100g == 0 {
+                        Text("No energy entered · grams will still be saved")
+                            .font(.wastlyCaption)
+                    } else {
+                        Text("\(Energy.display(hit.kilojoulesPer100g, unit: unit)) per 100 g")
+                            .font(.wastlyCaption)
+                            .monospacedDigit()
+                    }
                 }
             }
             Section("How much") {
@@ -187,6 +231,29 @@ struct LogSheet: View {
         }
         .scrollContentBackground(.hidden)
         .background(WastlyTheme.paper)
+    }
+
+    private func scannedLabelSection(_ scan: NutritionLabelScan) -> some View {
+        Section("Review label") {
+            TextField("Food name", text: $scannedFoodName)
+                .textInputAutocapitalization(.words)
+            TextField(scannedEnergyPrompt, text: $scannedEnergyPer100g)
+                .keyboardType(.decimalPad)
+            TextField("Serving grams (optional)", text: $scannedServingGrams)
+                .keyboardType(.decimalPad)
+            Label(
+                "On-device read · \(scan.confidence.formatted(.percent.precision(.fractionLength(0)))) confidence",
+                systemImage: "text.viewfinder"
+            )
+            .font(.wastlyCaption)
+            .foregroundStyle(WastlyTheme.muted)
+            DisclosureGroup("Recognized text") {
+                Text(scan.lines.isEmpty ? "No text recognized." : scan.lines.map(\.text).joined(separator: "\n"))
+                    .font(.wastlyCaption)
+                    .textSelection(.enabled)
+            }
+            Button("Wrong read? Search instead", action: rejectLabelRead)
+        }
     }
 
     private func stepper(_ title: String, value: Binding<Double>) -> some View {
@@ -215,6 +282,10 @@ struct LogSheet: View {
 
     private var customEnergyPrompt: String {
         unit == .kilojoules ? "kJ per 100 g (optional)" : "kcal per 100 g (optional)"
+    }
+
+    private var scannedEnergyPrompt: String {
+        unit == .kilojoules ? "Editable kJ per 100 g" : "Editable kcal per 100 g"
     }
 
     private var errorBinding: Binding<Bool> {
@@ -298,15 +369,85 @@ struct LogSheet: View {
         showingScanner = true
     }
 
+    private func openLabelCamera() async {
+        guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
+            errorMessage = "A camera isn’t available here. Choose a label photo instead."
+            return
+        }
+        guard await BarcodeScannerSupport.requestCameraAccess() else {
+            errorMessage = "Camera access is off. Allow it in Settings, or choose a label photo instead."
+            return
+        }
+        showingLabelCamera = true
+    }
+
+    private func loadSelectedLabelPhoto() async {
+        guard let selectedLabelPhoto else { return }
+        do {
+            guard let data = try await selectedLabelPhoto.loadTransferable(type: Data.self) else {
+                throw NutritionLabelOCRError.unreadableImage
+            }
+            await readLabel(data)
+        } catch {
+            errorMessage = (error as? LocalizedError)?.errorDescription
+                ?? "That label photo couldn’t be opened. Choose another photo and try again."
+        }
+    }
+
+    private func readLabel(_ imageData: Data) async {
+        readingLabel = true
+        defer { readingLabel = false }
+        do {
+            let scan = try await session.labelOCR.recognize(imageData: imageData)
+            labelScan = scan
+            let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
+            scannedFoodName = trimmedQuery.isEmpty ? "Scanned food" : trimmedQuery
+            if let energy = scan.energyKilojoulesPer100g {
+                let displayed = unit == .kilojoules
+                    ? energy
+                    : Energy.kilocalories(fromKilojoules: energy)
+                scannedEnergyPer100g = editableNumber(displayed)
+            } else {
+                scannedEnergyPer100g = ""
+            }
+            scannedServingGrams = scan.servingGrams.map(editableNumber) ?? ""
+            pick(FoodHit(
+                id: "ocr:label",
+                name: scannedFoodName,
+                kilojoulesPer100g: scan.energyKilojoulesPer100g ?? 0,
+                servingGrams: scan.servingGrams,
+                origin: .custom
+            ))
+        } catch {
+            errorMessage = (error as? LocalizedError)?.errorDescription
+                ?? "That label couldn’t be read. Try a brighter, straighter photo."
+        }
+    }
+
+    private func rejectLabelRead() {
+        let suggestion = scannedFoodName == "Scanned food" ? "" : scannedFoodName
+        labelScan = nil
+        selected = nil
+        query = suggestion
+    }
+
+    private func editableNumber(_ value: Double) -> String {
+        if value.rounded() == value, value <= Double(Int.max) {
+            return String(Int(value))
+        }
+        return String(format: "%.1f", locale: Locale(identifier: "en_US_POSIX"), value)
+    }
+
     private func save(_ hit: FoodHit) {
         guard let child else {
             errorMessage = "Choose a child before saving this log."
             return
         }
         do {
+            let resolvedHit = try resolvedHitForSave(hit)
             try FoodLogWriter.save(
                 FoodLogDraft(
-                    hit: hit,
+                    hit: resolvedHit,
                     loggedAt: session.diaryDay,
                     meal: meal,
                     eatenGrams: eaten,
@@ -317,9 +458,9 @@ struct LogSheet: View {
                 in: context
             )
             Task {
-                await session.directory.remember(hit)
-                if hit.origin == .custom {
-                    await session.directory.saveCustom(hit)
+                await session.directory.remember(resolvedHit)
+                if resolvedHit.origin == .custom {
+                    await session.directory.saveCustom(resolvedHit)
                 }
             }
             dismiss()
@@ -327,5 +468,15 @@ struct LogSheet: View {
             errorMessage = (error as? LocalizedError)?.errorDescription
                 ?? "Nothing was saved. Check available storage and try again."
         }
+    }
+
+    private func resolvedHitForSave(_ hit: FoodHit) throws -> FoodHit {
+        guard labelScan != nil else { return hit }
+        return try CustomFoodBuilder.make(
+            name: scannedFoodName,
+            energyPer100gText: scannedEnergyPer100g,
+            unit: unit,
+            servingGramsText: scannedServingGrams
+        )
     }
 }
