@@ -1,7 +1,7 @@
 import Foundation
 import SwiftData
 
-public enum RestoreMode: Sendable {
+public enum RestoreMode: String, Sendable {
     case replace
     case merge
 }
@@ -31,7 +31,11 @@ public enum BackupRestore {
         context: ModelContext
     ) throws {
         let childIDs = Set(payload.children.map(\.id))
+        let payloadMeasurementIDs = Set(payload.measurements.map(\.id))
+        let payloadLogIDs = Set(payload.logs.map(\.id))
         guard childIDs.count == payload.children.count,
+              payloadMeasurementIDs.count == payload.measurements.count,
+              payloadLogIDs.count == payload.logs.count,
               payload.logs.allSatisfy({ childIDs.contains($0.childID) }),
               payload.measurements.allSatisfy({ childIDs.contains($0.childID) })
         else {

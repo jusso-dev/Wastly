@@ -189,6 +189,67 @@ struct WastlyTests {
         #expect(await passwords.current() == "restore-password")
     }
 
+    @Test @MainActor func firstLaunchOfferCanCancelThenRestoreEncryptedBackup() async throws {
+        let childID = UUID()
+        let cloud = TestBackupEnvelopeStore()
+        let workflow = BackupWorkflow(store: cloud)
+        _ = try await workflow.upload(
+            payload: BackupPayload(
+                children: [BackupChild(id: childID, firstName: "Sam", dateOfBirth: .now)],
+                logs: [BackupLog(
+                    id: UUID(),
+                    childID: childID,
+                    loggedAt: .now,
+                    meal: .breakfast,
+                    foodName: "Weet-Bix",
+                    eatenGrams: 30,
+                    wastedGrams: 5,
+                    kilojoulesPer100g: 1_470
+                )],
+                customFoods: [],
+                energyUnit: .kilojoules
+            ),
+            password: "restore-password"
+        )
+        let container = try WastlyContainer.make(inMemory: true)
+        let context = ModelContext(container)
+        let session = SessionStore(
+            container: container,
+            backupWorkflow: workflow,
+            backupPasswordStore: TestBackupPasswordStore()
+        )
+
+        await session.applicationDidBecomeActive()
+        #expect(session.backupRestoreOffer?.isFirstLaunch == true)
+        #expect(session.backupRestoreOffer?.passwordProtected == true)
+        #expect(try context.fetch(FetchDescriptor<Child>()).isEmpty)
+
+        session.cancelRestoreOffer()
+        #expect(session.backupRestoreOffer == nil)
+        #expect(try context.fetch(FetchDescriptor<Child>()).isEmpty)
+        #expect(try context.fetch(FetchDescriptor<FoodLog>()).isEmpty)
+
+        await session.offerRestoreFromICloud()
+        #expect(session.backupRestoreOffer != nil)
+        let wrongPasswordRestored = await session.restoreFromICloud(
+            mode: .replace,
+            password: "wrong-password"
+        )
+        #expect(!wrongPasswordRestored)
+        #expect(session.backupPasswordPrompt == nil)
+        #expect(session.backupRestoreOffer != nil)
+        #expect(try context.fetch(FetchDescriptor<Child>()).isEmpty)
+        #expect(try context.fetch(FetchDescriptor<FoodLog>()).isEmpty)
+
+        #expect(await session.restoreFromICloud(
+            mode: .replace,
+            password: "restore-password"
+        ))
+        #expect(session.backupRestoreOffer == nil)
+        #expect(try context.fetch(FetchDescriptor<Child>()).map(\.id) == [childID])
+        #expect(try context.fetch(FetchDescriptor<FoodLog>()).map(\.foodName) == ["Weet-Bix"])
+    }
+
     @Test @MainActor func restoredFaceIDSettingKeepsDiaryLocked() async throws {
         let container = try WastlyContainer.make(inMemory: true)
         let cloud = TestBackupEnvelopeStore()

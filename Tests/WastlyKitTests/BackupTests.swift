@@ -209,6 +209,122 @@ struct BackupTests {
         }
     }
 
+    @Test func mergeKeepsLocalLogIDsAndAddsOnlyMissingBackupRows() throws {
+        let childID = UUID()
+        let sharedLogID = UUID()
+        let localOnlyLogID = UUID()
+        let cloudOnlyLogID = UUID()
+        let container = try WastlyContainer.make(inMemory: true)
+        let context = ModelContext(container)
+        let child = Child(
+            id: childID,
+            firstName: "Local Sam",
+            dateOfBirth: Date(timeIntervalSince1970: 1_000_000)
+        )
+        context.insert(child)
+        context.insert(FoodLog(
+            id: sharedLogID,
+            meal: .breakfast,
+            foodName: "Local shared row",
+            eatenGrams: 20,
+            wastedGrams: 1,
+            kilojoulesPer100g: 500,
+            child: child
+        ))
+        context.insert(FoodLog(
+            id: localOnlyLogID,
+            meal: .lunch,
+            foodName: "Local only row",
+            eatenGrams: 30,
+            wastedGrams: 2,
+            kilojoulesPer100g: 600,
+            child: child
+        ))
+        try context.save()
+
+        let payload = BackupPayload(
+            children: [BackupChild(
+                id: childID,
+                firstName: "Cloud Sam",
+                dateOfBirth: Date(timeIntervalSince1970: 1_000_000)
+            )],
+            logs: [
+                BackupLog(
+                    id: sharedLogID,
+                    childID: childID,
+                    loggedAt: .now,
+                    meal: .breakfast,
+                    foodName: "Cloud shared row",
+                    eatenGrams: 99,
+                    wastedGrams: 9,
+                    kilojoulesPer100g: 999
+                ),
+                BackupLog(
+                    id: cloudOnlyLogID,
+                    childID: childID,
+                    loggedAt: .now,
+                    meal: .dinner,
+                    foodName: "Cloud only row",
+                    eatenGrams: 40,
+                    wastedGrams: 3,
+                    kilojoulesPer100g: 700
+                ),
+            ],
+            customFoods: [],
+            energyUnit: .kilojoules
+        )
+
+        try BackupRestore.apply(
+            payload: payload,
+            backupCreatedAt: .now,
+            mode: .merge,
+            context: context
+        )
+
+        let logs = try context.fetch(FetchDescriptor<FoodLog>())
+        #expect(logs.count == 3)
+        #expect(logs.first { $0.id == sharedLogID }?.foodName == "Local shared row")
+        #expect(logs.contains { $0.id == localOnlyLogID })
+        #expect(logs.first { $0.id == cloudOnlyLogID }?.foodName == "Cloud only row")
+    }
+
+    @Test func duplicateLogIDsAreRejectedBeforeRestoreWrites() throws {
+        let childID = UUID()
+        let logID = UUID()
+        let duplicated = BackupLog(
+            id: logID,
+            childID: childID,
+            loggedAt: .now,
+            meal: .snacks,
+            foodName: "Duplicate",
+            eatenGrams: 10,
+            wastedGrams: 0,
+            kilojoulesPer100g: 100
+        )
+        let payload = BackupPayload(
+            children: [BackupChild(id: childID, firstName: "Sam", dateOfBirth: .now)],
+            logs: [duplicated, duplicated],
+            customFoods: [],
+            energyUnit: .kilojoules
+        )
+        let container = try WastlyContainer.make(inMemory: true)
+        let context = ModelContext(container)
+        let localChild = Child(firstName: "Local child", dateOfBirth: .now)
+        context.insert(localChild)
+        try context.save()
+
+        #expect(throws: BackupError.missingPayload) {
+            try BackupRestore.apply(
+                payload: payload,
+                backupCreatedAt: .now,
+                mode: .merge,
+                context: context
+            )
+        }
+        #expect(try context.fetch(FetchDescriptor<Child>()).map(\.id) == [localChild.id])
+        #expect(try context.fetch(FetchDescriptor<FoodLog>()).isEmpty)
+    }
+
     @Test func passwordPolicyRequiresEightNonWhitespaceCharacters() {
         #expect(!BackupPasswordPolicy.isValid("short"))
         #expect(!BackupPasswordPolicy.isValid("        "))

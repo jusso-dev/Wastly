@@ -40,6 +40,11 @@ struct RootView: View {
                 .environmentObject(session)
                 .presentationDetents([.medium, .large])
         }
+        .sheet(item: $session.backupRestoreOffer) { offer in
+            BackupRestoreOfferSheet(offer: offer)
+                .environmentObject(session)
+                .interactiveDismissDisabled()
+        }
     }
 }
 
