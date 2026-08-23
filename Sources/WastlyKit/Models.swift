@@ -45,6 +45,7 @@ public enum FoodOrigin: String, Codable, Sendable {
     case usda
     case catalog
     case seed
+    case cloudPlate
 }
 
 @Model

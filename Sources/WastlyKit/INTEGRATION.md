@@ -17,3 +17,4 @@ let directory = LocalFirstFoodDirectory(
 Energy is stored as kJ. Use `Energy.display(_:unit:)` for kJ/kcal labels.
 Barcode match uses `Barcode.normalized` (leading zeros stripped).
 The app target reads `USDA_API_KEY` from the optional, gitignored `Secrets.xcconfig`. Keep live keys out of source and fixtures.
+Optional plate matching reads `PLATE_MATCH_URL` and `PLATE_MATCH_API_KEY` from that file. It is default-off and only sends the output of `PlateImagePreparer.jpegCrop` after explicit user action.

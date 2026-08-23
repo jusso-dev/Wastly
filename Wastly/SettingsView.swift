@@ -25,9 +25,24 @@ struct SettingsView: View {
                     .pickerStyle(.segmented)
                 }
                 Section("Privacy") {
-                    Toggle("Cloud plate match", isOn: boolBinding(\.ocrCloudEnabled))
                     Toggle("LLM facts", isOn: boolBinding(\.llmEnabled))
                     Toggle("Face ID lock", isOn: faceBinding)
+                }
+                Section("Optional cloud plate match") {
+                    Toggle("Send a cropped plate photo", isOn: boolBinding(\.ocrCloudEnabled))
+                    if settings.ocrCloudEnabled {
+                        Text("Only a compressed centre crop is sent. Child details, notes, and original photo metadata are excluded.")
+                            .font(.wastlyCaption)
+                        if session.plateMatcher == nil {
+                            Text("No plate matching service is configured in this build.")
+                                .font(.wastlyCaption)
+                                .foregroundStyle(WastlyTheme.muted)
+                        }
+                    } else {
+                        Text("Off by default. On-device label reading still works without this.")
+                            .font(.wastlyCaption)
+                            .foregroundStyle(WastlyTheme.muted)
+                    }
                 }
                 Section("Backup") {
                     Toggle("iCloud backup", isOn: boolBinding(\.iCloudBackupEnabled))
