@@ -72,15 +72,19 @@ struct FactsView: View {
                 } else {
                     HStack(alignment: .bottom, spacing: 8) {
                         ForEach(days, id: \.self) { day in
-                            let t = DayLogs.totals(logs: DayLogs.filtered(logs: weekLogs, day: day, filter: .all))
+                            let totals = DiaryDay.totals(
+                                for: DayLogs.filtered(logs: weekLogs, day: day, filter: .all)
+                            )
                             let maxG = max(days.map { d in
-                                let x = DayLogs.totals(logs: DayLogs.filtered(logs: weekLogs, day: d, filter: .all))
-                                return x.eatenG + x.wastedG
+                                let dayTotals = DiaryDay.totals(
+                                    for: DayLogs.filtered(logs: weekLogs, day: d, filter: .all)
+                                )
+                                return dayTotals.eatenGrams + dayTotals.wastedGrams
                             }.max() ?? 1, 1)
                             VStack(spacing: 4) {
                                 HStack(alignment: .bottom, spacing: 2) {
-                                    WastlyTheme.sage.frame(width: 8, height: max(4, 80 * t.eatenG / maxG))
-                                    WastlyTheme.apricot.frame(width: 8, height: max(4, 80 * t.wastedG / maxG))
+                                    WastlyTheme.sage.frame(width: 8, height: max(4, 80 * totals.eatenGrams / maxG))
+                                    WastlyTheme.apricot.frame(width: 8, height: max(4, 80 * totals.wastedGrams / maxG))
                                 }
                                 Text(day, format: .dateTime.weekday(.narrow))
                                     .font(.wastlyCaption)
