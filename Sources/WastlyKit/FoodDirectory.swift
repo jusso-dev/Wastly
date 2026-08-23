@@ -164,10 +164,12 @@ public struct RemoteFoodLookup: LiveFoodLookup {
               let response: OFFProductResponse = await requestJSON(url),
               response.status == 1,
               let product = response.product,
-              let hit = Self.hitFromOFF(product)
+              var hit = Self.hitFromOFF(product),
+              let remote = product.code ?? response.code,
+              Barcode.matches(remote, code)
         else { return nil }
-        let remote = product.code ?? response.code ?? path
-        guard Barcode.matches(remote, code) else { return nil }
+        hit.id = "off:\(remote)"
+        hit.barcodeRaw = remote
         return hit
     }
 

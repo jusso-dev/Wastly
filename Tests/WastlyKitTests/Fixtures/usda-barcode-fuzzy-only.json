@@ -1,0 +1,20 @@
+{
+  "foods": [
+    {
+      "brandOwner": "Wrong Foods",
+      "dataType": "Branded",
+      "description": "Wrong fuzzy product",
+      "fdcId": 900001,
+      "foodNutrients": [
+        {
+          "nutrientName": "Energy",
+          "nutrientNumber": "208",
+          "unitName": "KCAL",
+          "value": 999
+        }
+      ],
+      "gtinUpc": "4131"
+    }
+  ],
+  "totalHits": 1
+}
