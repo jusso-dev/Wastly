@@ -99,27 +99,13 @@ final class SessionStore: ObservableObject {
 }
 
 enum DayLogs {
-    static func sameDay(_ lhs: Date, _ rhs: Date, calendar: Calendar = .current) -> Bool {
-        calendar.isDate(lhs, inSameDayAs: rhs)
-    }
-
     static func filtered(logs: [FoodLog], day: Date, filter: SessionStore.DiaryFilter) -> [FoodLog] {
-        logs.filter { log in
-            guard sameDay(log.loggedAt, day) else { return false }
+        DiaryDay.logs(logs, on: day).filter { log in
             switch filter {
             case .all: return true
             case .eaten: return log.eatenGrams > 0
             case .wasted: return log.wastedGrams > 0
             }
         }
-    }
-
-    static func totals(logs: [FoodLog]) -> (eatenG: Double, wastedG: Double, eatenkJ: Double, wastedkJ: Double) {
-        (
-            logs.reduce(0) { $0 + $1.eatenGrams },
-            logs.reduce(0) { $0 + $1.wastedGrams },
-            logs.reduce(0) { $0 + $1.eatenKilojoules },
-            logs.reduce(0) { $0 + $1.wastedKilojoules }
-        )
     }
 }

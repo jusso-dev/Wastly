@@ -87,14 +87,14 @@ struct TodayView: View {
     }
 
     private var totalsCard: some View {
-        let t = DayLogs.totals(logs: dayLogs)
+        let totals = DiaryDay.totals(for: dayLogs)
         return JournalCard {
             VStack(alignment: .leading, spacing: 8) {
-                Text(Energy.display(t.eatenkJ, unit: unit))
+                Text(Energy.display(totals.eatenKilojoules, unit: unit))
                     .font(.wastlyDayTotal)
                     .monospacedDigit()
                     .foregroundStyle(WastlyTheme.ink)
-                Text("Eaten \(Int(t.eatenG)) g · Left \(Int(t.wastedG)) g · \(Energy.display(t.wastedkJ, unit: unit)) wasted")
+                Text("Eaten \(Int(totals.eatenGrams)) g · Left \(Int(totals.wastedGrams)) g · \(Energy.display(totals.wastedKilojoules, unit: unit)) wasted")
                     .font(.wastlyCaption)
                     .monospacedDigit()
                     .foregroundStyle(WastlyTheme.muted)
