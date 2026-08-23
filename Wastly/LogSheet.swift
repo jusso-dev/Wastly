@@ -44,6 +44,7 @@ struct LogSheet: View {
                 }
             }
         }
+        .tint(WastlyTheme.sage)
         .task { await runSearch() }
     }
 
@@ -85,6 +86,7 @@ struct LogSheet: View {
                 if searching {
                     Text("Looking up…")
                         .font(.wastlyCaption)
+                        .foregroundStyle(WastlyTheme.muted)
                 }
                 ForEach(hits) { hit in
                     Button { pick(hit) } label: {
@@ -96,12 +98,16 @@ struct LogSheet: View {
                         .font(.wastlyCaption)
                         .foregroundStyle(WastlyTheme.muted)
                 }
-                Button("Save a custom food") {
+                Button {
                     let name = customName.isEmpty ? (query.isEmpty ? "Custom food" : query) : customName
                     pick(FoodHit(id: "custom:\(name)", name: name, kilojoulesPer100g: 0, origin: .custom))
+                } label: {
+                    Label("Save a custom food", systemImage: "plus.circle")
                 }
             }
         }
+        .scrollContentBackground(.hidden)
+        .background(WastlyTheme.paper)
         .onChange(of: query) { _, _ in
             Task { await runSearch() }
         }
@@ -131,8 +137,15 @@ struct LogSheet: View {
                 }
                 TextField("Note (optional)", text: $note)
             }
-            Button("Save") { save(hit) }
+            Button { save(hit) } label: {
+                Label("Save log", systemImage: "checkmark")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(WastlyTheme.sage)
         }
+        .scrollContentBackground(.hidden)
+        .background(WastlyTheme.paper)
     }
 
     private func stepper(_ title: String, value: Binding<Double>) -> some View {

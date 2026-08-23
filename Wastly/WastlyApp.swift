@@ -8,11 +8,13 @@ struct WastlyApp: App {
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
+        let bootstrapped: SessionStore
         do {
-            _session = StateObject(wrappedValue: try SessionStore.bootstrap())
+            bootstrapped = try SessionStore.bootstrap()
         } catch {
             fatalError("Wastly could not open the local store: \(error)")
         }
+        _session = StateObject(wrappedValue: bootstrapped)
     }
 
     var body: some Scene {

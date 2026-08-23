@@ -50,6 +50,8 @@ struct MainTabs: View {
             SettingsView()
                 .tabItem { Label("Settings", systemImage: "gearshape") }
         }
+        .toolbarBackground(WastlyTheme.surface, for: .tabBar)
+        .toolbarBackground(.visible, for: .tabBar)
         .sheet(isPresented: $showingLog) {
             LogSheet()
         }
