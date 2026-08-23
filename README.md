@@ -8,7 +8,7 @@ Private offline iOS diary of what a child eats and wastes.
 
 Native SwiftUI. No account. Logs stay on the iPhone. iCloud backup is off in this build. The only planned network calls are food lookup (Open Food Facts, USDA) and an optional cheap LLM for fun facts.
 
-App icon art: [docs/app-icon.svg](docs/app-icon.svg) and [docs/app-icon.jpg](docs/app-icon.jpg). The Xcode asset is still empty. On this branch the two JPEGs are broken 5-byte links. Main has the real files.
+App icon art: [docs/app-icon.svg](docs/app-icon.svg) and [docs/app-icon.jpg](docs/app-icon.jpg). The Xcode asset is still empty.
 
 Build prompt: [docs/BUILD.md](docs/BUILD.md)
 
