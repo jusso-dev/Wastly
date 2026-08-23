@@ -10,6 +10,9 @@ struct PrivacyTests {
             firstName: "Sam"
         )
         let object = try payload.jsonObject()
+        #expect(Set(object.keys) == [
+            "first_name", "days", "eaten_g", "wasted_g", "top_food",
+        ])
         #expect(object["weightKg"] == nil)
         #expect(object["photo"] == nil)
         #expect(object["dateOfBirth"] == nil)
@@ -36,6 +39,7 @@ struct PrivacyTests {
     @Test func addingPIIToOutboundJSONFailsTheGuard() throws {
         for object: [String: Any] in [
             ["firstName": "Sam", "weightKg": 18.0],
+            ["first_name": "Sam", "child_metrics": ["weight_kg": 18.0]],
             ["child": ["photo": Data([0xFF, 0xD8]).base64EncodedString()]],
         ] {
             let data = try JSONSerialization.data(withJSONObject: object)

@@ -21,6 +21,97 @@ struct WastlyTests {
         #expect(Energy.display(4184, unit: .kilojoules).hasSuffix(" kJ"))
     }
 
+    @Test func gramSplitAndLeftoverMathStayBounded() {
+        #expect(GramMath.leftoverGrams(offered: 40, eaten: 30, wasted: 0) == 10)
+        #expect(GramMath.leftoverGrams(offered: nil, eaten: 30, wasted: 10) == 10)
+        let split = GramMath.split(offered: 20, eaten: 50)
+        #expect(split.eaten == 20)
+        #expect(split.wasted == 0)
+    }
+
+    @Test func barcodeLeadingZerosRemainInTheRawValue() {
+        let raw = "09300652804562"
+        let log = FoodLog(
+            meal: .breakfast,
+            foodName: "Weet-Bix",
+            barcodeRaw: raw,
+            eatenGrams: 30,
+            wastedGrams: 0,
+            kilojoulesPer100g: 1_470
+        )
+        #expect(log.barcodeRaw == raw)
+        #expect(log.barcodeNormalized == "9300652804562")
+        #expect(Barcode.matches(raw, "9300652804562"))
+    }
+
+    @Test func backupEncryptionRoundTripsAndRejectsWrongPassword() throws {
+        let payload = BackupPayload(
+            children: [BackupChild(id: UUID(), firstName: "Sam", dateOfBirth: .now)],
+            logs: [],
+            customFoods: [],
+            energyUnit: .kilojoules
+        )
+        let envelope = try BackupCrypto.seal(
+            payload: payload,
+            password: "correct-horse"
+        )
+
+        #expect(try BackupCrypto.open(
+            envelope,
+            password: "correct-horse"
+        ).children.first?.firstName == "Sam")
+        #expect(envelope.plaintextJSON == nil)
+        #expect(throws: BackupError.wrongPassword) {
+            _ = try BackupCrypto.open(envelope, password: "wrong-password")
+        }
+    }
+
+    @Test func factInputsHashIsStable() {
+        let first = FactTotals(
+            days: 2,
+            eatenGrams: 100,
+            wastedGrams: 10,
+            eatenKilojoules: 400,
+            wastedKilojoules: 40,
+            topFood: "Banana"
+        )
+        let second = FactTotals(
+            days: 2,
+            eatenGrams: 100,
+            wastedGrams: 10,
+            eatenKilojoules: 400,
+            wastedKilojoules: 40,
+            topFood: "Banana"
+        )
+        #expect(first.inputsHash == second.inputsHash)
+    }
+
+    @Test func outboundFactPayloadAllowsOnlyAggregatesAndOptionalFirstName() throws {
+        let payload = try FactTemplates.llmPayload(
+            totals: FactTotals(
+                days: 3,
+                eatenGrams: 200,
+                wastedGrams: 40,
+                eatenKilojoules: 800,
+                wastedKilojoules: 160,
+                topFood: "Weet-Bix"
+            ),
+            firstName: "Sam"
+        )
+        let object = try payload.jsonObject()
+        #expect(Set(object.keys) == [
+            "first_name", "days", "eaten_g", "wasted_g", "top_food",
+        ])
+
+        let childWeight = try JSONSerialization.data(withJSONObject: [
+            "first_name": "Sam",
+            "child_metrics": ["weight_kg": 18.0],
+        ])
+        #expect(throws: PrivacyError.self) {
+            try PrivacyGuard.assertFactJSON(childWeight)
+        }
+    }
+
     @Test @MainActor func settingsUnitPersistsAndCacheClearKeepsDiary() async throws {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent("WastlySettingsTests-\(UUID().uuidString)", isDirectory: true)
