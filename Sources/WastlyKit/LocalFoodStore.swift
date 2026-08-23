@@ -2,6 +2,8 @@ import Foundation
 import SwiftData
 
 public actor LocalFoodStore {
+    public static let defaultMaximumCatalogRows = 100_000
+
     private let container: ModelContainer
 
     public init(container: ModelContainer) {
@@ -13,7 +15,7 @@ public actor LocalFoodStore {
         return LocalFoodStore(container: container)
     }
 
-    private func context() -> ModelContext {
+    func context() -> ModelContext {
         ModelContext(container)
     }
 
@@ -30,9 +32,21 @@ public actor LocalFoodStore {
             }
             .map(Self.hit(fromCache:))
 
-        let catalog = (try? ctx.fetch(FetchDescriptor<CatalogFood>())) ?? []
-        let catalogHits = catalog
-            .filter { $0.name.lowercased().contains(needle) || ($0.brand?.lowercased().contains(needle) ?? false) }
+        var descriptor = FetchDescriptor<CatalogFood>(
+            predicate: #Predicate { row in
+                row.name.localizedStandardContains(query)
+                    || (row.brand?.localizedStandardContains(query) ?? false)
+            }
+        )
+        descriptor.fetchLimit = 100
+        let catalogHits = ((try? ctx.fetch(descriptor)) ?? [])
+            .filter {
+                $0.name.lowercased().contains(needle)
+                    || ($0.brand?.lowercased().contains(needle) ?? false)
+            }
+            .sorted {
+                $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+            }
             .map(Self.hit(fromCatalog:))
 
         return FoodHitIdentity.merged(recentHits + catalogHits)
@@ -44,8 +58,11 @@ public actor LocalFoodStore {
         if let cache = recents.first(where: { $0.barcodeNormalized == normalized }) {
             return Self.hit(fromCache: cache)
         }
-        let catalog = (try? ctx.fetch(FetchDescriptor<CatalogFood>())) ?? []
-        if let row = catalog.first(where: { $0.barcodeNormalized == normalized }) {
+        var descriptor = FetchDescriptor<CatalogFood>(
+            predicate: #Predicate { $0.barcodeNormalized == normalized }
+        )
+        descriptor.fetchLimit = 1
+        if let row = try? ctx.fetch(descriptor).first {
             return Self.hit(fromCatalog: row)
         }
         return nil
@@ -112,37 +129,6 @@ public actor LocalFoodStore {
         try? ctx.save()
     }
 
-    public func upsertCatalog(_ rows: [SeedFood], version: Int) {
-        let ctx = context()
-        let existing = (try? ctx.fetch(FetchDescriptor<CatalogFood>())) ?? []
-        var byKey = Dictionary(uniqueKeysWithValues: existing.map { ($0.barcodeNormalized, $0) })
-        for row in rows {
-            let key = Barcode.normalized(row.barcode)
-            guard !key.isEmpty else { continue }
-            if let found = byKey[key] {
-                found.name = row.name
-                found.brand = row.brand
-                found.barcodeRaw = row.barcode
-                found.kilojoulesPer100g = row.kilojoulesPer100g
-                found.servingGrams = row.servingGrams
-                found.catalogVersion = version
-                found.updatedAt = .now
-            } else {
-                let food = CatalogFood(
-                    barcodeRaw: row.barcode,
-                    name: row.name,
-                    brand: row.brand,
-                    kilojoulesPer100g: row.kilojoulesPer100g,
-                    servingGrams: row.servingGrams,
-                    catalogVersion: version
-                )
-                ctx.insert(food)
-                byKey[key] = food
-            }
-        }
-        try? ctx.save()
-    }
-
     @discardableResult
     public func clearCacheLeavingCustomAndLogs() throws -> Int {
         let ctx = context()
@@ -153,13 +139,6 @@ public actor LocalFoodStore {
         }
         try ctx.save()
         return removable.count
-    }
-
-    public func insertSeedIfEmpty() {
-        let ctx = context()
-        let count = (try? ctx.fetchCount(FetchDescriptor<CatalogFood>())) ?? 0
-        guard count == 0 else { return }
-        upsertCatalog(SeedCatalog.foods, version: 0)
     }
 
     private static func hit(fromCache row: FoodCache) -> FoodHit {

@@ -84,6 +84,8 @@ final class SessionStore: ObservableObject {
     let container: ModelContainer
     let store: LocalFoodStore
     let directory: LocalFirstFoodDirectory
+    let catalogEndpoint: URL?
+    let catalogSync: CatalogSync?
     let labelOCR: NutritionLabelOCR
     let plateMatcher: RemotePlateMatcher?
     let factGenerator: RemoteFactGenerator?
@@ -102,9 +104,13 @@ final class SessionStore: ObservableObject {
     @Published private(set) var authenticationIsRunning = false
     @Published private(set) var lockMessage: String?
     @Published private(set) var backupIsRunning = false
+    @Published var catalogIsRunning = false
+    @Published var catalogSnapshot = CatalogStorageSnapshot()
+    @Published var catalogMessage: String?
     private var didCheckForRestoreOffer = false
     private var offeredRestoreEnvelope: BackupEnvelope?
     private var automaticallyUnlocksOnNextActive: Bool
+    var catalogUpdateTask: Task<Void, Never>?
 
     init(
         container: ModelContainer,
@@ -113,7 +119,16 @@ final class SessionStore: ObservableObject {
         deviceOwnerAuthenticator: any DeviceOwnerAuthenticating = LocalDeviceOwnerAuthenticator()
     ) {
         self.container = container
-        self.store = LocalFoodStore(container: container)
+        let store = LocalFoodStore(container: container)
+        let catalogEndpoint = Self.configuredCatalogURL()
+        self.store = store
+        self.catalogEndpoint = catalogEndpoint
+        self.catalogSync = catalogEndpoint.map { endpoint in
+            CatalogSync(
+                store: store,
+                extraHosts: Set([endpoint.host].compactMap { $0 })
+            )
+        }
         self.labelOCR = NutritionLabelOCR()
         self.plateMatcher = Self.configuredPlateMatcher()
         self.factGenerator = Self.configuredFactGenerator()
@@ -131,7 +146,7 @@ final class SessionStore: ObservableObject {
         self.showingOnboarding = children.isEmpty
         self.isLocked = settings.faceIDEnabled
         self.automaticallyUnlocksOnNextActive = settings.faceIDEnabled
-        Task { await store.insertSeedIfEmpty() }
+        Task { await bootstrapCatalog() }
     }
 
     static func bootstrap() throws -> SessionStore {

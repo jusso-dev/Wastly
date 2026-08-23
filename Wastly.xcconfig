@@ -1,5 +1,6 @@
 // Public defaults. Put the real data.gov key in the gitignored file below.
 USDA_API_KEY =
+CATALOG_URL =
 PLATE_MATCH_URL =
 PLATE_MATCH_API_KEY =
 FACT_SERVICE_URL =

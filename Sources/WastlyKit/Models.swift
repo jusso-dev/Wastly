@@ -210,6 +210,9 @@ public final class FoodCache {
 
 @Model
 public final class CatalogFood {
+    // `barcodeNormalized` is uniquely indexed; this second index backs local name search.
+    #Index<CatalogFood>([\.name])
+
     @Attribute(.unique) public var barcodeNormalized: String
     public var name: String
     public var brand: String?

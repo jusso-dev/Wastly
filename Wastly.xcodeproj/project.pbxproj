@@ -8,6 +8,8 @@
 
 		A10000000000000000000064 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000001 /* Theme.swift */; };
 		A10000000000000000000065 /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000002 /* SessionStore.swift */; };
+		A10000000000000000000077 /* CatalogSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000013 /* CatalogSession.swift */; };
+		A10000000000000000000078 /* CatalogSettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000014 /* CatalogSettingsSection.swift */; };
 		A10000000000000000000066 /* WastlyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000003 /* WastlyApp.swift */; };
 		A10000000000000000000067 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000004 /* RootView.swift */; };
 		A10000000000000000000068 /* ChildSwitcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000005 /* ChildSwitcher.swift */; };
@@ -31,6 +33,8 @@
 		A10000000000000000000029 /* WastlyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WastlyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A10000000000000000000001 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		A10000000000000000000002 /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
+		A10000000000000000000013 /* CatalogSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatalogSession.swift; sourceTree = "<group>"; };
+		A10000000000000000000014 /* CatalogSettingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatalogSettingsSection.swift; sourceTree = "<group>"; };
 		A10000000000000000000003 /* WastlyApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WastlyApp.swift; sourceTree = "<group>"; };
 		A10000000000000000000004 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		A10000000000000000000005 /* ChildSwitcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChildSwitcher.swift; sourceTree = "<group>"; };
@@ -91,6 +95,8 @@
 			children = (
 				A10000000000000000000001 /* Theme.swift */,
 				A10000000000000000000002 /* SessionStore.swift */,
+				A10000000000000000000013 /* CatalogSession.swift */,
+				A10000000000000000000014 /* CatalogSettingsSection.swift */,
 				A10000000000000000000003 /* WastlyApp.swift */,
 				A10000000000000000000004 /* RootView.swift */,
 				A10000000000000000000005 /* ChildSwitcher.swift */,
@@ -214,6 +220,8 @@
 			files = (
 				A10000000000000000000064 /* Theme.swift in Sources */,
 				A10000000000000000000065 /* SessionStore.swift in Sources */,
+				A10000000000000000000077 /* CatalogSession.swift in Sources */,
+				A10000000000000000000078 /* CatalogSettingsSection.swift in Sources */,
 				A10000000000000000000066 /* WastlyApp.swift in Sources */,
 				A10000000000000000000067 /* RootView.swift in Sources */,
 				A10000000000000000000068 /* ChildSwitcher.swift in Sources */,
