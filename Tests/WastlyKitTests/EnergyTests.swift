@@ -2,9 +2,18 @@ import Testing
 @testable import WastlyKit
 
 struct EnergyTests {
+    @Test func sharedHelperKeepsKJAsTheStorageBoundary() {
+        let stored = Energy.storedKilojoules(from: 1_000, unit: .kilocalories)
+
+        #expect(abs(stored - 4_184) < 0.001)
+        let displayed = Energy.value(fromStoredKilojoules: stored, unit: .kilocalories)
+        #expect(abs(displayed - 1_000) < 0.001)
+        #expect(Energy.value(fromStoredKilojoules: stored, unit: .kilojoules) == 4_184)
+    }
+
     @Test func kilocalorieRoundTrip() {
-        let kJ = Energy.kilojoules(fromKilocalories: 1000)
-        #expect(abs(kJ - 4184) < 0.001)
+        let kilojoules = Energy.kilojoules(fromKilocalories: 1000)
+        #expect(abs(kilojoules - 4184) < 0.001)
         #expect(abs(Energy.kilocalories(fromKilojoules: 4184) - 1000) < 0.001)
     }
 
@@ -13,7 +22,8 @@ struct EnergyTests {
     }
 
     @Test func displayUsesUnit() {
-        #expect(Energy.display(4184, unit: .kilocalories) == "1,000 kcal" || Energy.display(4184, unit: .kilocalories).contains("1000"))
-        #expect(Energy.display(4184, unit: .kilojoules).contains("kJ"))
+        let calories = Energy.display(4184, unit: .kilocalories)
+        #expect(calories == "1,000 kcal" || calories.contains("1000"))
+        #expect(Energy.display(4184, unit: .kilojoules).hasSuffix("kJ"))
     }
 }

@@ -544,9 +544,7 @@ struct LogSheet: View {
             let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
             scannedFoodName = trimmedQuery.isEmpty ? "Scanned food" : trimmedQuery
             if let energy = scan.energyKilojoulesPer100g {
-                let displayed = unit == .kilojoules
-                    ? energy
-                    : Energy.kilocalories(fromKilojoules: energy)
+                let displayed = Energy.value(fromStoredKilojoules: energy, unit: unit)
                 scannedEnergyPer100g = editableNumber(displayed)
             } else {
                 scannedEnergyPer100g = ""

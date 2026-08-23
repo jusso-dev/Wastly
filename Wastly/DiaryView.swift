@@ -47,7 +47,9 @@ struct DiaryView: View {
         guard let first = calendarDays.first?.date,
               let last = calendarDays.last?.date
         else { return "Selected week" }
-        return "\(first.formatted(.dateTime.day().month(.abbreviated))) – \(last.formatted(.dateTime.day().month(.abbreviated).year()))"
+        let firstLabel = first.formatted(.dateTime.day().month(.abbreviated))
+        let lastLabel = last.formatted(.dateTime.day().month(.abbreviated).year())
+        return "\(firstLabel) – \(lastLabel)"
     }
 
     var body: some View {
@@ -105,7 +107,8 @@ struct DiaryView: View {
                 DiaryExportSheet(
                     children: children,
                     selectedChildID: child?.id,
-                    logs: allLogs
+                    logs: allLogs,
+                    unit: unit
                 )
             }
         }
@@ -240,6 +243,7 @@ private struct DiaryExportSheet: View {
     let children: [Child]
     let selectedChildID: UUID?
     let logs: [FoodLog]
+    let unit: EnergyUnit
     @State private var scope: DiaryExportScope = .selectedChild
     @State private var exportURL: URL?
     @State private var exportError: String?
@@ -278,7 +282,10 @@ private struct DiaryExportSheet: View {
 
                 Section("CSV file") {
                     LabeledContent("Rows", value: exportLogs.count.formatted())
-                    Text("The UTF-8 file contains date, meal, food, gram, and kilojoule columns. Dates use day/month/year.")
+                    Text(
+                        "The UTF-8 file contains date, meal, food, gram, and \(unit.symbol) "
+                            + "energy columns. Dates use day/month/year."
+                    )
                         .font(.wastlyCaption)
                         .foregroundStyle(WastlyTheme.muted)
 
@@ -312,7 +319,7 @@ private struct DiaryExportSheet: View {
                     Button("Done") { dismiss() }
                 }
             }
-            .task(id: scope) {
+            .task(id: "\(scope.rawValue):\(unit.rawValue)") {
                 prepareExport()
             }
             .onDisappear {
@@ -335,7 +342,8 @@ private struct DiaryExportSheet: View {
             exportURL = try DiaryCSV.write(
                 logs: exportLogs,
                 to: directory,
-                filename: filename
+                filename: filename,
+                unit: unit
             )
         } catch {
             exportError = "Wastly couldn’t prepare the CSV file. Check available storage and try again."

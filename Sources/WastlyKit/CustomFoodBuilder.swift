@@ -36,9 +36,7 @@ public enum CustomFoodBuilder: Sendable {
         } else {
             throw CustomFoodInputError.invalidEnergy
         }
-        let kilojoules = unit == .kilojoules
-            ? enteredEnergy
-            : Energy.kilojoules(fromKilocalories: enteredEnergy)
+        let kilojoules = Energy.storedKilojoules(from: enteredEnergy, unit: unit)
 
         let trimmedServing = servingGramsText.trimmingCharacters(in: .whitespacesAndNewlines)
         let servingGrams: Double?

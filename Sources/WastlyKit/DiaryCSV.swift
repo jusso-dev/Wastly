@@ -1,9 +1,17 @@
 import Foundation
 
 public enum DiaryCSV: Sendable {
-    public static let headers = ["date", "meal", "food", "eaten g", "wasted g", "kJ eaten", "kJ wasted"]
+    public static var headers: [String] { headers(for: .kilojoules) }
 
-    public static func build(logs: [FoodLog], timeZone: TimeZone = TimeZone(identifier: "Australia/Sydney") ?? .current) -> String {
+    public static func headers(for unit: EnergyUnit) -> [String] {
+        ["date", "meal", "food", "eaten g", "wasted g", "\(unit.symbol) eaten", "\(unit.symbol) wasted"]
+    }
+
+    public static func build(
+        logs: [FoodLog],
+        unit: EnergyUnit = .kilojoules,
+        timeZone: TimeZone = TimeZone(identifier: "Australia/Sydney") ?? .current
+    ) -> String {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = timeZone
         let formatter = DateFormatter()
@@ -11,7 +19,7 @@ public enum DiaryCSV: Sendable {
         formatter.timeZone = timeZone
         formatter.locale = Locale(identifier: "en_AU")
         formatter.dateFormat = "dd/MM/yyyy"
-        var lines = [headers.joined(separator: ",")]
+        var lines = [headers(for: unit).joined(separator: ",")]
         for log in logs.sorted(by: { $0.loggedAt < $1.loggedAt }) {
             let cols = [
                 formatter.string(from: log.loggedAt),
@@ -19,8 +27,8 @@ public enum DiaryCSV: Sendable {
                 csv(log.foodName),
                 csv(format(log.eatenGrams)),
                 csv(format(log.wastedGrams)),
-                csv(format(log.eatenKilojoules)),
-                csv(format(log.wastedKilojoules)),
+                csv(format(Energy.value(fromStoredKilojoules: log.eatenKilojoules, unit: unit))),
+                csv(format(Energy.value(fromStoredKilojoules: log.wastedKilojoules, unit: unit)))
             ]
             lines.append(cols.joined(separator: ","))
         }
@@ -32,6 +40,7 @@ public enum DiaryCSV: Sendable {
         logs: [FoodLog],
         to directory: URL,
         filename: String,
+        unit: EnergyUnit = .kilojoules,
         timeZone: TimeZone = TimeZone(identifier: "Australia/Sydney") ?? .current
     ) throws -> URL {
         try FileManager.default.createDirectory(
@@ -39,13 +48,13 @@ public enum DiaryCSV: Sendable {
             withIntermediateDirectories: true
         )
         let url = directory.appendingPathComponent(filename)
-        try Data(build(logs: logs, timeZone: timeZone).utf8)
+        try Data(build(logs: logs, unit: unit, timeZone: timeZone).utf8)
             .write(to: url, options: .atomic)
         return url
     }
 
     private static func format(_ value: Double) -> String {
-        String(format: "%.1f", locale: Locale(identifier: "en_AU"), value)
+        String(format: "%.1f", locale: Locale(identifier: "en_US_POSIX"), value)
     }
 
     private static func csv(_ value: String) -> String {

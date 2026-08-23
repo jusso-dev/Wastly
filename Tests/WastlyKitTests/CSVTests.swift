@@ -4,6 +4,25 @@ import Testing
 @testable import WastlyKit
 
 struct CSVTests {
+    @Test func selectedKcalChangesExportPresentationNotStorage() {
+        let log = FoodLog(
+            loggedAt: Date(timeIntervalSince1970: 0),
+            meal: .lunch,
+            foodName: "Stored in kJ",
+            eatenGrams: 100,
+            wastedGrams: 0,
+            kilojoulesPer100g: 4_184
+        )
+
+        let csv = DiaryCSV.build(logs: [log], unit: .kilocalories)
+
+        #expect(DiaryCSV.headers(for: .kilocalories).suffix(2) == ["kcal eaten", "kcal wasted"])
+        #expect(csv.hasPrefix("date,meal,food,eaten g,wasted g,kcal eaten,kcal wasted\n"))
+        #expect(csv.contains(",1000.0,0.0\n"))
+        #expect(log.kilojoulesPer100g == 4_184)
+        #expect(log.eatenKilojoules == 4_184)
+    }
+
     @Test func utf8ExportMatchesTheSpreadsheetContract() throws {
         let container = try WastlyContainer.make(inMemory: true)
         let context = ModelContext(container)
@@ -31,7 +50,7 @@ struct CSVTests {
         let csv = DiaryCSV.build(logs: [log])
 
         #expect(DiaryCSV.headers == [
-            "date", "meal", "food", "eaten g", "wasted g", "kJ eaten", "kJ wasted",
+            "date", "meal", "food", "eaten g", "wasted g", "kJ eaten", "kJ wasted"
         ])
         #expect(csv.hasPrefix("date,meal,food,eaten g,wasted g,kJ eaten,kJ wasted\n"))
         #expect(csv.contains("22/04/2026,breakfast,\"Crème brûlée, \"\"small\"\"\",30.0,10.0,441.0,147.0"))
