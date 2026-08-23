@@ -21,6 +21,9 @@ struct LogSheet: View {
     @State private var scannedEnergyPer100g = ""
     @State private var scannedServingGrams = ""
     @State private var selectedLabelPhoto: PhotosPickerItem?
+    @State private var selectedPlatePhoto: PhotosPickerItem?
+    @State private var plateCandidates: [PlateMatchCandidate] = []
+    @State private var plateMessage: String?
     @State private var customName = ""
     @State private var customEnergyPer100g = ""
     @State private var eaten: Double = 30
@@ -30,11 +33,14 @@ struct LogSheet: View {
     @State private var barcode = ""
     @State private var searching = false
     @State private var readingLabel = false
+    @State private var matchingPlate = false
     @State private var showingScanner = false
     @State private var showingLabelCamera = false
+    @State private var showingPlateCamera = false
     @State private var errorMessage: String?
 
     private var unit: EnergyUnit { settingsRows.first?.energyUnit ?? .kilojoules }
+    private var cloudPlateEnabled: Bool { settingsRows.first?.ocrCloudEnabled ?? false }
     private var child: Child? {
         children.first(where: { $0.id == session.selectedChildID }) ?? children.first
     }
@@ -69,6 +75,9 @@ struct LogSheet: View {
         .task(id: selectedLabelPhoto) {
             await loadSelectedLabelPhoto()
         }
+        .task(id: selectedPlatePhoto) {
+            await loadSelectedPlatePhoto()
+        }
         .fullScreenCover(isPresented: $showingScanner) {
             BarcodeScannerView(
                 onScanned: { scanned in
@@ -88,7 +97,17 @@ struct LogSheet: View {
             )
             .ignoresSafeArea()
         }
-        .interactiveDismissDisabled(readingLabel)
+        .fullScreenCover(isPresented: $showingPlateCamera) {
+            LabelCameraPicker(
+                onImage: { data in
+                    showingPlateCamera = false
+                    Task { await matchPlate(data) }
+                },
+                onCancel: { showingPlateCamera = false }
+            )
+            .ignoresSafeArea()
+        }
+        .interactiveDismissDisabled(readingLabel || matchingPlate)
         .alert("Couldn’t add food", isPresented: errorBinding) {
             Button("OK", role: .cancel) { errorMessage = nil }
         } message: {
@@ -129,6 +148,52 @@ struct LogSheet: View {
                 Text("Vision runs offline. The photo is processed in memory and is not stored or uploaded.")
                     .font(.wastlyCaption)
                     .foregroundStyle(WastlyTheme.muted)
+            }
+            Section("Optional cloud plate match") {
+                if cloudPlateEnabled {
+                    Button {
+                        Task { await openPlateCamera() }
+                    } label: {
+                        Label("Take plate photo", systemImage: "camera.viewfinder")
+                    }
+                    .disabled(session.plateMatcher == nil || matchingPlate)
+                    PhotosPicker(selection: $selectedPlatePhoto, matching: .images) {
+                        Label("Choose plate photo", systemImage: "photo.badge.magnifyingglass")
+                    }
+                    .disabled(session.plateMatcher == nil || matchingPlate)
+                    if matchingPlate {
+                        ProgressView("Finding candidates…")
+                            .font(.wastlyCaption)
+                    }
+                    Text("Only a compressed centre crop is sent. You still choose a candidate and confirm every amount.")
+                        .font(.wastlyCaption)
+                        .foregroundStyle(WastlyTheme.muted)
+                    if session.plateMatcher == nil {
+                        Text("No matching service is configured in this build.")
+                            .font(.wastlyCaption)
+                            .foregroundStyle(WastlyTheme.muted)
+                    }
+                } else {
+                    Label("Off in Settings", systemImage: "lock.shield")
+                        .foregroundStyle(WastlyTheme.muted)
+                    Text("Enable it in Settings only if you want a cropped plate photo sent for suggestions.")
+                        .font(.wastlyCaption)
+                        .foregroundStyle(WastlyTheme.muted)
+                }
+                if let plateMessage {
+                    Text(plateMessage)
+                        .font(.wastlyCaption)
+                        .foregroundStyle(WastlyTheme.muted)
+                }
+            }
+            if !plateCandidates.isEmpty {
+                Section("Plate candidates") {
+                    ForEach(plateCandidates) { candidate in
+                        Button { pick(candidate.foodHit) } label: {
+                            plateCandidateLabel(candidate)
+                        }
+                    }
+                }
             }
             Section("Recents") {
                 ForEach(recentFoods.prefix(8), id: \.id) { row in
@@ -273,6 +338,22 @@ struct LogSheet: View {
         }
     }
 
+    private func plateCandidateLabel(_ candidate: PlateMatchCandidate) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(candidate.name)
+                .font(.wastlyBody)
+                .foregroundStyle(WastlyTheme.ink)
+            HStack {
+                Text(candidate.confidence.formatted(.percent.precision(.fractionLength(0))))
+                if let energy = candidate.kilojoulesPer100g {
+                    Text("· \(Energy.display(energy, unit: unit)) / 100 g")
+                }
+            }
+            .font(.wastlyCaption)
+            .foregroundStyle(WastlyTheme.muted)
+        }
+    }
+
     private var customFoodName: String? {
         let custom = customName.trimmingCharacters(in: .whitespacesAndNewlines)
         if !custom.isEmpty { return custom }
@@ -381,6 +462,26 @@ struct LogSheet: View {
         showingLabelCamera = true
     }
 
+    private func openPlateCamera() async {
+        guard cloudPlateEnabled else {
+            errorMessage = "Cloud plate matching is off. Enable it in Settings first."
+            return
+        }
+        guard session.plateMatcher != nil else {
+            errorMessage = "No plate matching service is configured in this build."
+            return
+        }
+        guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
+            errorMessage = "A camera isn’t available here. Choose a plate photo instead."
+            return
+        }
+        guard await BarcodeScannerSupport.requestCameraAccess() else {
+            errorMessage = "Camera access is off. Allow it in Settings, or choose a plate photo instead."
+            return
+        }
+        showingPlateCamera = true
+    }
+
     private func loadSelectedLabelPhoto() async {
         guard let selectedLabelPhoto else { return }
         do {
@@ -391,6 +492,46 @@ struct LogSheet: View {
         } catch {
             errorMessage = (error as? LocalizedError)?.errorDescription
                 ?? "That label photo couldn’t be opened. Choose another photo and try again."
+        }
+    }
+
+    private func loadSelectedPlatePhoto() async {
+        guard let selectedPlatePhoto else { return }
+        do {
+            guard let data = try await selectedPlatePhoto.loadTransferable(type: Data.self) else {
+                throw PlateMatchError.unreadableImage
+            }
+            await matchPlate(data)
+        } catch {
+            errorMessage = (error as? LocalizedError)?.errorDescription
+                ?? "That plate photo couldn’t be opened. Choose another photo and try again."
+        }
+    }
+
+    private func matchPlate(_ imageData: Data) async {
+        guard cloudPlateEnabled else {
+            plateMessage = "Cloud plate matching is off. No photo was sent."
+            return
+        }
+        guard let matcher = session.plateMatcher else {
+            plateMessage = "No plate matching service is configured in this build."
+            return
+        }
+        matchingPlate = true
+        plateMessage = nil
+        plateCandidates = []
+        defer { matchingPlate = false }
+        do {
+            plateCandidates = try await matcher.candidates(
+                from: imageData,
+                enabled: cloudPlateEnabled
+            )
+            if plateCandidates.isEmpty {
+                plateMessage = "No confident candidates. Search for the food instead."
+            }
+        } catch {
+            plateMessage = (error as? LocalizedError)?.errorDescription
+                ?? "Plate matching failed. Search for the food instead."
         }
     }
 

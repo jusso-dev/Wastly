@@ -34,6 +34,10 @@ public enum PrivacyAllowlist: Sendable {
         isSecure(url) && isAllowedLLMHost(url.host ?? "", configured: configuredHosts)
     }
 
+    public static func isAllowedPlateMatchURL(_ url: URL, configuredHost: String) -> Bool {
+        isSecure(url) && url.host?.caseInsensitiveCompare(configuredHost) == .orderedSame
+    }
+
     private static func isSecure(_ url: URL) -> Bool {
         url.scheme?.lowercased() == "https" && url.user == nil && url.password == nil
     }
@@ -76,6 +80,9 @@ public enum PrivacyGuard: Sendable {
         "weightKg", "weightKilograms", "heightCm", "heightCentimetres",
         "photo", "photoJPEG", "dateOfBirth", "dob", "lastName",
     ]
+    public static let forbiddenPlateKeys = forbiddenFactKeys.union([
+        "child", "childId", "childID", "firstName", "name", "note",
+    ])
 
     public static func assertFactPayload(_ payload: FactLLMPayload) throws {
         try assertFactJSON(JSONEncoder().encode(payload))
@@ -83,20 +90,30 @@ public enum PrivacyGuard: Sendable {
 
     public static func assertFactJSON(_ data: Data) throws {
         let object = try JSONSerialization.jsonObject(with: data)
-        try assertNoForbiddenFields(in: object)
+        try assertNoForbiddenFields(in: object, forbiddenKeys: forbiddenFactKeys)
     }
 
-    private static func assertNoForbiddenFields(in value: Any) throws {
+    public static func assertPlateJSON(_ data: Data) throws {
+        let object = try JSONSerialization.jsonObject(with: data)
+        try assertNoForbiddenFields(in: object, forbiddenKeys: forbiddenPlateKeys)
+    }
+
+    private static func assertNoForbiddenFields(
+        in value: Any,
+        forbiddenKeys: Set<String>
+    ) throws {
         if let object = value as? [String: Any] {
             for (key, child) in object {
-                if forbiddenFactKeys.contains(key) {
+                if forbiddenKeys.contains(where: {
+                    $0.caseInsensitiveCompare(key) == .orderedSame
+                }) {
                     throw PrivacyError.forbiddenField(key)
                 }
-                try assertNoForbiddenFields(in: child)
+                try assertNoForbiddenFields(in: child, forbiddenKeys: forbiddenKeys)
             }
         } else if let array = value as? [Any] {
             for child in array {
-                try assertNoForbiddenFields(in: child)
+                try assertNoForbiddenFields(in: child, forbiddenKeys: forbiddenKeys)
             }
         }
     }
@@ -116,5 +133,11 @@ public struct PlateMatchRequest: Sendable {
             "image": jpegCrop.base64EncodedString(),
             "mimeType": mimeType,
         ]
+    }
+
+    public func encodedJSON() throws -> Data {
+        let data = try JSONSerialization.data(withJSONObject: jsonObject(), options: [.sortedKeys])
+        try PrivacyGuard.assertPlateJSON(data)
+        return data
     }
 }

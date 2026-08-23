@@ -1,3 +1,5 @@
 // Public defaults. Put the real data.gov key in the gitignored file below.
 USDA_API_KEY =
+PLATE_MATCH_URL =
+PLATE_MATCH_API_KEY =
 #include? "Secrets.xcconfig"

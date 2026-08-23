@@ -7,7 +7,7 @@ Wastly has no account, ads, analytics SDK, or tracking. Child profiles and diary
 - Food lookup: HTTPS requests only to `world.openfoodfacts.org`, `world.openfoodfacts.net`, `api.nal.usda.gov`, and `fdc.nal.usda.gov`.
 - Bulk catalog: HTTPS only. A deployment must explicitly add its catalog host to the code-level allowlist.
 - Fun facts: disabled by default. A deployment must explicitly configure one HTTPS LLM host. Payloads contain aggregate days, eaten grams, wasted grams, top food, and optional first name only.
-- Plate matching: disabled by default. When enabled, only the selected crop and MIME type leave the device.
+- Plate matching: disabled by default and unconfigured in a default build. When the parent opts in and chooses a photo, Wastly sends only a metadata-stripped, compressed centre JPEG crop plus its MIME type to the explicitly configured HTTPS host. Child names, IDs, body data, diary notes, and original EXIF/GPS metadata are excluded.
 
 Date of birth, age, measurements, full child profile, and profile photos are forbidden in fun-fact payloads. `PrivacyGuard` rejects forbidden keys, including nested keys, before a request can be sent.
 

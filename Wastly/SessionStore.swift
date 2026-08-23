@@ -10,6 +10,7 @@ final class SessionStore: ObservableObject {
     let store: LocalFoodStore
     let directory: LocalFirstFoodDirectory
     let labelOCR: NutritionLabelOCR
+    let plateMatcher: RemotePlateMatcher?
 
     @Published var selectedChildID: UUID?
     @Published var isLocked: Bool
@@ -35,6 +36,7 @@ final class SessionStore: ObservableObject {
         self.container = container
         self.store = LocalFoodStore(container: container)
         self.labelOCR = NutritionLabelOCR()
+        self.plateMatcher = Self.configuredPlateMatcher()
         self.directory = LocalFirstFoodDirectory(
             store: store,
             live: RemoteFoodLookup(usdaAPIKey: Self.usdaAPIKey())
@@ -63,6 +65,32 @@ final class SessionStore: ObservableObject {
               key != "paste-your-data-gov-key-here"
         else { return nil }
         return key
+    }
+
+    private static func configuredPlateMatcher() -> RemotePlateMatcher? {
+        guard let rawURL = Bundle.main.object(forInfoDictionaryKey: "PlateMatchURL") as? String else {
+            return nil
+        }
+        let value = rawURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty,
+              !value.contains("$("),
+              let url = URL(string: value),
+              let host = url.host,
+              PrivacyAllowlist.isAllowedPlateMatchURL(url, configuredHost: host)
+        else { return nil }
+
+        let rawKey = Bundle.main.object(forInfoDictionaryKey: "PlateMatchAPIKey") as? String
+        let trimmedKey = rawKey?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let key: String?
+        if let trimmedKey,
+           !trimmedKey.isEmpty,
+           !trimmedKey.contains("$("),
+           trimmedKey != "paste-your-plate-matcher-key-here" {
+            key = trimmedKey
+        } else {
+            key = nil
+        }
+        return RemotePlateMatcher(endpoint: url, apiKey: key)
     }
 
     static func settings(in context: ModelContext) -> AppSettings {
