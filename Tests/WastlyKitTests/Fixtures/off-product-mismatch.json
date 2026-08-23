@@ -1,0 +1,11 @@
+{
+  "code": "4131",
+  "product": {
+    "code": "4131",
+    "nutriments": {
+      "energy-kcal_100g": 999
+    },
+    "product_name": "Wrong fuzzy product"
+  },
+  "status": 1
+}
