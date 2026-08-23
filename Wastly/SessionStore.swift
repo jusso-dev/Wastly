@@ -9,6 +9,7 @@ final class SessionStore: ObservableObject {
     let container: ModelContainer
     let store: LocalFoodStore
     let directory: LocalFirstFoodDirectory
+    let labelOCR: NutritionLabelOCR
 
     @Published var selectedChildID: UUID?
     @Published var isLocked: Bool
@@ -33,6 +34,7 @@ final class SessionStore: ObservableObject {
     init(container: ModelContainer) {
         self.container = container
         self.store = LocalFoodStore(container: container)
+        self.labelOCR = NutritionLabelOCR()
         self.directory = LocalFirstFoodDirectory(
             store: store,
             live: RemoteFoodLookup(usdaAPIKey: Self.usdaAPIKey())

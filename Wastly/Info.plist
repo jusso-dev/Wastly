@@ -25,7 +25,7 @@
 	<key>NSFaceIDUsageDescription</key>
 	<string>Wastly can lock the diary behind Face ID so another person on this iPad cannot open it.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Wastly uses the camera only to scan a food barcode.</string>
+	<string>Wastly uses the camera only to scan a food barcode or read a nutrition label on this device.</string>
 	<key>USDAAPIKey</key>
 	<string>$(USDA_API_KEY)</string>
 	<key>UILaunchScreen</key>
