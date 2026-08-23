@@ -12,6 +12,65 @@ enum BackupPasswordPromptPurpose: String, Identifiable {
     var id: String { rawValue }
 }
 
+enum DeviceOwnerAuthenticationResult: Equatable, Sendable {
+    case authenticated
+    case failed(String)
+}
+
+protocol DeviceOwnerAuthenticating: Sendable {
+    func authenticate(localizedReason: String) async -> DeviceOwnerAuthenticationResult
+}
+
+struct LocalDeviceOwnerAuthenticator: DeviceOwnerAuthenticating {
+    func authenticate(localizedReason: String) async -> DeviceOwnerAuthenticationResult {
+        let context = LAContext()
+        context.localizedCancelTitle = "Keep Locked"
+        context.localizedFallbackTitle = "Use Passcode"
+
+        var availabilityError: NSError?
+        guard context.canEvaluatePolicy(
+            .deviceOwnerAuthentication,
+            error: &availabilityError
+        ) else {
+            return .failed(Self.message(for: availabilityError))
+        }
+
+        do {
+            let authenticated = try await context.evaluatePolicy(
+                .deviceOwnerAuthentication,
+                localizedReason: localizedReason
+            )
+            return authenticated
+                ? .authenticated
+                : .failed("Face ID or the device passcode did not unlock the diary. Try again.")
+        } catch {
+            return .failed(Self.message(for: error))
+        }
+    }
+
+    private static func message(for error: Error?) -> String {
+        guard let code = (error as? LAError)?.code else {
+            return "Device authentication is unavailable. The diary stayed locked."
+        }
+        switch code {
+        case .userCancel, .appCancel, .systemCancel:
+            return "The diary stayed locked. Tap Unlock when you’re ready."
+        case .authenticationFailed:
+            return "Face ID or the device passcode did not unlock the diary. Try again."
+        case .passcodeNotSet:
+            return "Set a device passcode in Settings before turning on the diary lock."
+        case .biometryNotAvailable, .biometryNotEnrolled:
+            return "Face ID or Touch ID is unavailable. Use the device passcode, or check device Settings."
+        case .biometryLockout:
+            return "Biometrics are locked. Use the device passcode to unlock the diary."
+        case .notInteractive:
+            return "Unlock while Wastly is onscreen. The diary stayed locked."
+        default:
+            return "Device authentication failed. The diary stayed locked."
+        }
+    }
+}
+
 @MainActor
 final class SessionStore: ObservableObject {
     let container: ModelContainer
@@ -22,21 +81,26 @@ final class SessionStore: ObservableObject {
     let factGenerator: RemoteFactGenerator?
     let backupWorkflow: BackupWorkflow
     let backupPasswordStore: any BackupPasswordStore
+    let deviceOwnerAuthenticator: any DeviceOwnerAuthenticating
 
     @Published var selectedChildID: UUID?
-    @Published var isLocked: Bool
+    @Published private(set) var isLocked: Bool
     @Published var showingOnboarding: Bool
     @Published var diaryFilter: DiaryLogFilter = .all
     @Published var diaryDay: Date = .now
     @Published var backupMessage: String?
     @Published var backupPasswordPrompt: BackupPasswordPromptPurpose?
+    @Published private(set) var authenticationIsRunning = false
+    @Published private(set) var lockMessage: String?
     @Published private(set) var backupIsRunning = false
     private var didAttemptAutomaticRestore = false
+    private var automaticallyUnlocksOnNextActive: Bool
 
     init(
         container: ModelContainer,
         backupWorkflow: BackupWorkflow = BackupWorkflow(store: CloudKitBackupStore()),
-        backupPasswordStore: any BackupPasswordStore = KeychainBackupPasswordStore()
+        backupPasswordStore: any BackupPasswordStore = KeychainBackupPasswordStore(),
+        deviceOwnerAuthenticator: any DeviceOwnerAuthenticating = LocalDeviceOwnerAuthenticator()
     ) {
         self.container = container
         self.store = LocalFoodStore(container: container)
@@ -45,6 +109,7 @@ final class SessionStore: ObservableObject {
         self.factGenerator = Self.configuredFactGenerator()
         self.backupWorkflow = backupWorkflow
         self.backupPasswordStore = backupPasswordStore
+        self.deviceOwnerAuthenticator = deviceOwnerAuthenticator
         self.directory = LocalFirstFoodDirectory(
             store: store,
             live: RemoteFoodLookup(usdaAPIKey: Self.usdaAPIKey())
@@ -55,6 +120,7 @@ final class SessionStore: ObservableObject {
         self.selectedChildID = children.sorted { $0.createdAt < $1.createdAt }.first?.id
         self.showingOnboarding = children.isEmpty
         self.isLocked = settings.faceIDEnabled
+        self.automaticallyUnlocksOnNextActive = settings.faceIDEnabled
         Task { await store.insertSeedIfEmpty() }
     }
 
@@ -136,41 +202,58 @@ final class SessionStore: ObservableObject {
         return created
     }
 
-    func refreshLockFromSettings() {
-        let context = ModelContext(container)
-        let settings = Self.settings(in: context)
-        if !settings.faceIDEnabled {
-            isLocked = false
-        }
+    func diaryLockSettingChanged(enabled: Bool) {
+        isLocked = enabled
+        automaticallyUnlocksOnNextActive = false
+        lockMessage = nil
     }
 
     func unlock() async {
+        guard isLocked, !authenticationIsRunning else { return }
         let context = ModelContext(container)
         let settings = Self.settings(in: context)
         guard settings.faceIDEnabled else {
             isLocked = false
+            lockMessage = nil
             return
         }
-        let auth = LAContext()
-        var error: NSError?
-        guard auth.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error) else {
+
+        authenticationIsRunning = true
+        defer { authenticationIsRunning = false }
+        switch await deviceOwnerAuthenticator.authenticate(
+            localizedReason: "Unlock your private Wastly diary"
+        ) {
+        case .authenticated:
+            isLocked = false
+            lockMessage = nil
+        case let .failed(message):
             isLocked = true
-            return
-        }
-        do {
-            let ok = try await auth.evaluatePolicy(
-                .deviceOwnerAuthentication,
-                localizedReason: "Unlock the Wastly diary"
-            )
-            isLocked = !ok
-        } catch {
-            isLocked = true
+            lockMessage = message
         }
     }
 
-    func lockIfNeeded() {
+    func lockForPrivacy() {
         let context = ModelContext(container)
-        isLocked = Self.settings(in: context).faceIDEnabled
+        let enabled = Self.settings(in: context).faceIDEnabled
+        isLocked = enabled
+        if enabled { lockMessage = nil }
+    }
+
+    func lockForBackground() {
+        let context = ModelContext(container)
+        let enabled = Self.settings(in: context).faceIDEnabled
+        isLocked = enabled
+        automaticallyUnlocksOnNextActive = enabled
+        if enabled { lockMessage = nil }
+    }
+
+    func applicationDidBecomeActive() async {
+        if automaticallyUnlocksOnNextActive, !authenticationIsRunning {
+            automaticallyUnlocksOnNextActive = false
+            await unlock()
+        }
+        guard !isLocked else { return }
+        await backupOnActiveIfNeeded()
     }
 
     func backupOnActiveIfNeeded() async {
@@ -361,7 +444,7 @@ final class SessionStore: ObservableObject {
                 .sorted { $0.createdAt < $1.createdAt }
             selectedChildID = children.first?.id
             showingOnboarding = children.isEmpty
-            isLocked = false
+            diaryLockSettingChanged(enabled: Self.settings(in: context).faceIDEnabled)
             if let restorePassword {
                 do {
                     try await backupPasswordStore.save(restorePassword)

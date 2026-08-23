@@ -27,7 +27,11 @@ struct SettingsView: View {
                     .pickerStyle(.segmented)
                 }
                 Section("Privacy") {
-                    Toggle("Face ID lock", isOn: faceBinding)
+                    Toggle("Face ID or passcode lock", isOn: faceBinding)
+                        .accessibilityIdentifier("settings.diaryLock")
+                    Text("When enabled, Wastly hides the diary whenever the app leaves the foreground.")
+                        .font(.wastlyCaption)
+                        .foregroundStyle(WastlyTheme.muted)
                 }
                 Section("Optional online facts") {
                     Toggle("Generate extra facts online", isOn: boolBinding(\.llmEnabled))
@@ -206,7 +210,10 @@ struct SettingsView: View {
             set: { new in
                 settings.faceIDEnabled = new
                 try? context.save()
-                if !new { session.isLocked = false }
+                session.diaryLockSettingChanged(enabled: new)
+                if new {
+                    Task { await session.unlock() }
+                }
             }
         )
     }

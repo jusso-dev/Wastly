@@ -40,6 +40,62 @@ struct WastlyTests {
         }
     }
 
+    @Test @MainActor func diaryLockOffNeverRequestsAuthentication() async throws {
+        let container = try WastlyContainer.make(inMemory: true)
+        let context = ModelContext(container)
+        context.insert(Child(firstName: "Sam", dateOfBirth: .now))
+        context.insert(AppSettings())
+        try context.save()
+        let authenticator = TestDeviceOwnerAuthenticator(results: [.authenticated])
+        let session = SessionStore(
+            container: container,
+            deviceOwnerAuthenticator: authenticator
+        )
+
+        #expect(!session.isLocked)
+        await session.applicationDidBecomeActive()
+        #expect(!session.isLocked)
+        #expect(await authenticator.callCount() == 0)
+    }
+
+    @Test @MainActor func diaryLockFailsClosedAndReauthenticatesAfterBackground() async throws {
+        let container = try WastlyContainer.make(inMemory: true)
+        let context = ModelContext(container)
+        context.insert(Child(firstName: "Sam", dateOfBirth: .now))
+        let settings = AppSettings()
+        settings.faceIDEnabled = true
+        context.insert(settings)
+        try context.save()
+        let authenticator = TestDeviceOwnerAuthenticator(results: [
+            .authenticated,
+            .failed("Authentication failed."),
+            .authenticated,
+        ])
+        let session = SessionStore(
+            container: container,
+            deviceOwnerAuthenticator: authenticator
+        )
+
+        #expect(session.isLocked)
+        await session.applicationDidBecomeActive()
+        #expect(!session.isLocked)
+        #expect(await authenticator.callCount() == 1)
+
+        session.lockForPrivacy()
+        await session.applicationDidBecomeActive()
+        #expect(session.isLocked)
+        #expect(await authenticator.callCount() == 1)
+
+        await session.unlock()
+        #expect(session.isLocked)
+        #expect(session.lockMessage == "Authentication failed.")
+
+        session.lockForBackground()
+        await session.applicationDidBecomeActive()
+        #expect(!session.isLocked)
+        #expect(await authenticator.callCount() == 3)
+    }
+
     @Test @MainActor func backupPasswordCanBeSetChangedAndRemoved() async throws {
         let container = try WastlyContainer.make(inMemory: true)
         let context = ModelContext(container)
@@ -132,6 +188,37 @@ struct WastlyTests {
         #expect(session.backupPasswordPrompt == nil)
         #expect(await passwords.current() == "restore-password")
     }
+
+    @Test @MainActor func restoredFaceIDSettingKeepsDiaryLocked() async throws {
+        let container = try WastlyContainer.make(inMemory: true)
+        let cloud = TestBackupEnvelopeStore()
+        let workflow = BackupWorkflow(store: cloud)
+        _ = try await workflow.upload(payload: BackupPayload(
+            children: [BackupChild(id: UUID(), firstName: "Sam", dateOfBirth: .now)],
+            logs: [],
+            customFoods: [],
+            energyUnit: .kilojoules,
+            settings: BackupSettings(
+                energyUnit: .kilojoules,
+                ocrCloudEnabled: false,
+                llmEnabled: false,
+                iCloudBackupEnabled: true,
+                backupPasswordEnabled: false,
+                faceIDEnabled: true
+            )
+        ))
+        let authenticator = TestDeviceOwnerAuthenticator(results: [.authenticated])
+        let session = SessionStore(
+            container: container,
+            backupWorkflow: workflow,
+            backupPasswordStore: TestBackupPasswordStore(),
+            deviceOwnerAuthenticator: authenticator
+        )
+
+        #expect(await session.restoreFromICloud())
+        #expect(session.isLocked)
+        #expect(await authenticator.callCount() == 0)
+    }
 }
 
 private actor TestBackupEnvelopeStore: BackupEnvelopeStore {
@@ -163,5 +250,26 @@ private actor TestBackupPasswordStore: BackupPasswordStore {
 
     func current() -> String? {
         password
+    }
+}
+
+private actor TestDeviceOwnerAuthenticator: DeviceOwnerAuthenticating {
+    private var results: [DeviceOwnerAuthenticationResult]
+    private var calls = 0
+
+    init(results: [DeviceOwnerAuthenticationResult]) {
+        self.results = results
+    }
+
+    func authenticate(localizedReason: String) async -> DeviceOwnerAuthenticationResult {
+        calls += 1
+        guard !results.isEmpty else {
+            return .failed("No test authentication result was configured.")
+        }
+        return results.removeFirst()
+    }
+
+    func callCount() -> Int {
+        calls
     }
 }

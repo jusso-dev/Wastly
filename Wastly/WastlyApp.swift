@@ -24,11 +24,16 @@ struct WastlyApp: App {
                 .modelContainer(session.container)
                 .preferredColorScheme(.light)
         }
-        .onChange(of: scenePhase) { _, phase in
-            if phase == .active {
-                Task { await session.backupOnActiveIfNeeded() }
-            } else if phase == .background || phase == .inactive {
-                session.lockIfNeeded()
+        .onChange(of: scenePhase, initial: true) { _, phase in
+            switch phase {
+            case .active:
+                Task { await session.applicationDidBecomeActive() }
+            case .inactive:
+                session.lockForPrivacy()
+            case .background:
+                session.lockForBackground()
+            @unknown default:
+                session.lockForPrivacy()
             }
         }
     }

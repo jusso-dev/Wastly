@@ -49,7 +49,8 @@ struct OnboardingView: View {
 
                 JournalCard {
                     VStack(alignment: .leading, spacing: 10) {
-                        Toggle("Lock the diary with Face ID", isOn: $faceID)
+                        Toggle("Lock with Face ID or device passcode", isOn: $faceID)
+                            .accessibilityIdentifier("onboarding.diaryLock")
                         Toggle("iCloud backup", isOn: $backup)
                         Toggle("Password on the backup", isOn: $backupPassword)
                             .disabled(!backup)
@@ -141,7 +142,6 @@ struct OnboardingView: View {
                 in: context
             )
             session.selectedChildID = child.id
-            session.isLocked = false
             if backupPassword {
                 let passwordSaved = await session.setBackupPassword(backupPasswordText)
                 if !passwordSaved, session.backupPasswordPrompt == nil {
@@ -150,7 +150,9 @@ struct OnboardingView: View {
             } else if backup {
                 await session.backupNow()
             }
+            session.diaryLockSettingChanged(enabled: faceID)
             session.showingOnboarding = false
+            if faceID { await session.unlock() }
         } catch {
             saveError = "Nothing was saved. Check available storage and try again."
         }
