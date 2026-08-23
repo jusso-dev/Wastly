@@ -7,6 +7,8 @@ struct SettingsView: View {
     @EnvironmentObject private var session: SessionStore
     @Query private var settingsRows: [AppSettings]
     @Query private var catalogState: [CatalogState]
+    @State private var showingClearCacheConfirmation = false
+    @State private var cacheMessage: String?
 
     private var settings: AppSettings {
         SessionStore.settings(in: context)
@@ -46,8 +48,15 @@ struct SettingsView: View {
                     }
                     Text("About \(settings.catalogBytesOnDisk / 1024) KB on disk")
                         .font(.wastlyCaption)
-                    Button("Clear food cache") {
-                        Task { await session.store.clearCacheLeavingCustomAndLogs() }
+                    Button("Clear downloaded food cache", role: .destructive) {
+                        showingClearCacheConfirmation = true
+                    }
+                    Text("Custom foods and diary logs are never removed.")
+                        .font(.wastlyCaption)
+                    if let cacheMessage {
+                        Text(cacheMessage)
+                            .font(.wastlyCaption)
+                            .foregroundStyle(WastlyTheme.muted)
                     }
                 }
                 Section("About") {
@@ -57,6 +66,18 @@ struct SettingsView: View {
             }
             .scrollContentBackground(.hidden)
             .navigationTitle("Settings")
+        }
+        .confirmationDialog(
+            "Clear downloaded food cache?",
+            isPresented: $showingClearCacheConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Clear downloaded cache", role: .destructive) {
+                clearFoodCache()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Recent provider lookups will need internet again. Custom foods and diary logs stay on this iPhone.")
         }
     }
 
@@ -89,5 +110,18 @@ struct SettingsView: View {
                 try? context.save()
             }
         )
+    }
+
+    private func clearFoodCache() {
+        Task {
+            do {
+                let removed = try await session.store.clearCacheLeavingCustomAndLogs()
+                cacheMessage = removed == 1
+                    ? "Removed 1 downloaded food."
+                    : "Removed \(removed) downloaded foods."
+            } catch {
+                cacheMessage = "Couldn’t clear the cache. Check available storage and try again."
+            }
+        }
     }
 }

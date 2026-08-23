@@ -51,7 +51,23 @@ public actor LocalFoodStore {
         return nil
     }
 
-    public func upsertCache(_ hit: FoodHit, isCustom: Bool = false) {
+    public func cacheLookup(_ hit: FoodHit) {
+        upsertCache(hit, isCustom: false, markUsed: false)
+    }
+
+    public func saveCustom(_ hit: FoodHit) {
+        upsertCache(hit, isCustom: true, markUsed: false)
+    }
+
+    public func touchRecent(_ hit: FoodHit) {
+        upsertCache(hit, isCustom: hit.origin == .custom, markUsed: true)
+    }
+
+    private func upsertCache(
+        _ hit: FoodHit,
+        isCustom: Bool,
+        markUsed: Bool
+    ) {
         let ctx = context()
         let existing = (try? ctx.fetch(FetchDescriptor<FoodCache>())) ?? []
         let key = FoodHitIdentity.key(for: hit)
@@ -64,16 +80,19 @@ public actor LocalFoodStore {
             ) == key || $0.providerKey == hit.id
         }) {
             // A provider result may de-duplicate against a user-authored food, but must never replace it.
-            guard !row.isCustom || isCustom else { return }
-            row.name = hit.name
-            row.brand = hit.brand
-            row.barcodeRaw = hit.barcodeRaw
-            row.barcodeNormalized = hit.barcodeNormalized
-            row.kilojoulesPer100g = hit.kilojoulesPer100g
-            row.servingGrams = hit.servingGrams
-            row.isCustom = isCustom || row.isCustom
-            row.useCount += 1
-            row.lastUsedAt = .now
+            if !row.isCustom || isCustom {
+                row.name = hit.name
+                row.brand = hit.brand
+                row.barcodeRaw = hit.barcodeRaw
+                row.barcodeNormalized = hit.barcodeNormalized
+                row.kilojoulesPer100g = hit.kilojoulesPer100g
+                row.servingGrams = hit.servingGrams
+                row.isCustom = isCustom || row.isCustom
+            }
+            if markUsed {
+                row.useCount += 1
+                row.lastUsedAt = .now
+            }
         } else {
             ctx.insert(
                 FoodCache(
@@ -84,15 +103,13 @@ public actor LocalFoodStore {
                     servingGrams: hit.servingGrams,
                     origin: hit.origin,
                     isCustom: isCustom,
+                    useCount: markUsed ? 1 : 0,
+                    lastUsedAt: markUsed ? .now : .distantPast,
                     providerKey: hit.id
                 )
             )
         }
         try? ctx.save()
-    }
-
-    public func touchRecent(_ hit: FoodHit) {
-        upsertCache(hit)
     }
 
     public func upsertCatalog(_ rows: [SeedFood], version: Int) {
@@ -126,13 +143,16 @@ public actor LocalFoodStore {
         try? ctx.save()
     }
 
-    public func clearCacheLeavingCustomAndLogs() {
+    @discardableResult
+    public func clearCacheLeavingCustomAndLogs() throws -> Int {
         let ctx = context()
-        let rows = (try? ctx.fetch(FetchDescriptor<FoodCache>())) ?? []
-        for row in rows where !row.isCustom {
+        let rows = try ctx.fetch(FetchDescriptor<FoodCache>())
+        let removable = rows.filter { !$0.isCustom }
+        for row in removable {
             ctx.delete(row)
         }
-        try? ctx.save()
+        try ctx.save()
+        return removable.count
     }
 
     public func insertSeedIfEmpty() {

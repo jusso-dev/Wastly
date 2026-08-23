@@ -15,6 +15,7 @@ struct LogSheet: View {
     @State private var miss: FoodLookupMiss?
     @State private var selected: FoodHit?
     @State private var customName = ""
+    @State private var customEnergyPer100g = ""
     @State private var eaten: Double = 30
     @State private var wasted: Double = 0
     @State private var meal: MealSlot = .snacks
@@ -27,6 +28,14 @@ struct LogSheet: View {
     private var unit: EnergyUnit { settingsRows.first?.energyUnit ?? .kilojoules }
     private var child: Child? {
         children.first(where: { $0.id == session.selectedChildID }) ?? children.first
+    }
+    private var recentFoods: [FoodCache] {
+        recents
+            .filter { $0.useCount > 0 }
+            .sorted { lhs, rhs in
+                if lhs.useCount != rhs.useCount { return lhs.useCount > rhs.useCount }
+                return lhs.lastUsedAt > rhs.lastUsedAt
+            }
     }
 
     var body: some View {
@@ -82,7 +91,7 @@ struct LogSheet: View {
                 }
             }
             Section("Recents") {
-                ForEach(recents.prefix(8), id: \.id) { row in
+                ForEach(recentFoods.prefix(8), id: \.id) { row in
                     Button {
                         pick(FoodHit(
                             id: row.providerKey ?? row.id.uuidString,
@@ -97,7 +106,7 @@ struct LogSheet: View {
                         hitLabel(name: row.name, brand: row.brand, kJ: row.kilojoulesPer100g)
                     }
                 }
-                if recents.isEmpty {
+                if recentFoods.isEmpty {
                     Text("No recents yet.")
                         .font(.wastlyCaption)
                         .foregroundStyle(WastlyTheme.muted)
@@ -122,6 +131,11 @@ struct LogSheet: View {
             }
             Section("Custom food") {
                 TextField("Custom food name", text: $customName)
+                TextField(customEnergyPrompt, text: $customEnergyPer100g)
+                    .keyboardType(.decimalPad)
+                Text("Optional. Leave blank to log grams without energy totals.")
+                    .font(.wastlyCaption)
+                    .foregroundStyle(WastlyTheme.muted)
                 Button(action: pickCustomFood) {
                     Label("Use custom food", systemImage: "plus.circle")
                 }
@@ -141,9 +155,14 @@ struct LogSheet: View {
                 if let brand = hit.brand, !brand.isEmpty {
                     Text(brand).font(.wastlyCaption)
                 }
-                Text("\(Energy.display(hit.kilojoulesPer100g, unit: unit)) per 100 g")
-                    .font(.wastlyCaption)
-                    .monospacedDigit()
+                if hit.origin == .custom, hit.kilojoulesPer100g == 0 {
+                    Text("No energy entered · grams will still be saved")
+                        .font(.wastlyCaption)
+                } else {
+                    Text("\(Energy.display(hit.kilojoulesPer100g, unit: unit)) per 100 g")
+                        .font(.wastlyCaption)
+                        .monospacedDigit()
+                }
             }
             Section("How much") {
                 stepper("Eaten, grams", value: $eaten)
@@ -194,6 +213,10 @@ struct LogSheet: View {
         return searched.isEmpty ? nil : searched
     }
 
+    private var customEnergyPrompt: String {
+        unit == .kilojoules ? "kJ per 100 g (optional)" : "kcal per 100 g (optional)"
+    }
+
     private var errorBinding: Binding<Bool> {
         Binding(
             get: { errorMessage != nil },
@@ -218,12 +241,16 @@ struct LogSheet: View {
 
     private func pickCustomFood() {
         guard let name = customFoodName else { return }
-        pick(FoodHit(
-            id: "custom:\(name)",
-            name: name,
-            kilojoulesPer100g: 0,
-            origin: .custom
-        ))
+        do {
+            pick(try CustomFoodBuilder.make(
+                name: name,
+                energyPer100gText: customEnergyPer100g,
+                unit: unit
+            ))
+        } catch {
+            errorMessage = (error as? LocalizedError)?.errorDescription
+                ?? "Check the custom food details and try again."
+        }
     }
 
     private func ateAll() {
