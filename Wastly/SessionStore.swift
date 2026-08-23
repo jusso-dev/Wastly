@@ -4,6 +4,14 @@ import SwiftData
 import SwiftUI
 import WastlyKit
 
+enum BackupPasswordPromptPurpose: String, Identifiable {
+    case set
+    case change
+    case restore
+
+    var id: String { rawValue }
+}
+
 @MainActor
 final class SessionStore: ObservableObject {
     let container: ModelContainer
@@ -13,6 +21,7 @@ final class SessionStore: ObservableObject {
     let plateMatcher: RemotePlateMatcher?
     let factGenerator: RemoteFactGenerator?
     let backupWorkflow: BackupWorkflow
+    let backupPasswordStore: any BackupPasswordStore
 
     @Published var selectedChildID: UUID?
     @Published var isLocked: Bool
@@ -20,16 +29,22 @@ final class SessionStore: ObservableObject {
     @Published var diaryFilter: DiaryLogFilter = .all
     @Published var diaryDay: Date = .now
     @Published var backupMessage: String?
+    @Published var backupPasswordPrompt: BackupPasswordPromptPurpose?
     @Published private(set) var backupIsRunning = false
     private var didAttemptAutomaticRestore = false
 
-    init(container: ModelContainer) {
+    init(
+        container: ModelContainer,
+        backupWorkflow: BackupWorkflow = BackupWorkflow(store: CloudKitBackupStore()),
+        backupPasswordStore: any BackupPasswordStore = KeychainBackupPasswordStore()
+    ) {
         self.container = container
         self.store = LocalFoodStore(container: container)
         self.labelOCR = NutritionLabelOCR()
         self.plateMatcher = Self.configuredPlateMatcher()
         self.factGenerator = Self.configuredFactGenerator()
-        self.backupWorkflow = BackupWorkflow(store: CloudKitBackupStore())
+        self.backupWorkflow = backupWorkflow
+        self.backupPasswordStore = backupPasswordStore
         self.directory = LocalFirstFoodDirectory(
             store: store,
             live: RemoteFoodLookup(usdaAPIKey: Self.usdaAPIKey())
@@ -182,24 +197,129 @@ final class SessionStore: ObservableObject {
             backupMessage = "Turn on iCloud backup first."
             return
         }
-        guard !settings.backupPasswordEnabled else {
-            backupMessage = "Password-protected iCloud backup needs a password before it can run."
-            return
-        }
 
         do {
+            let storedPassword = try await backupPasswordStore.load()
+            let password: String?
+            if settings.backupPasswordEnabled {
+                guard let storedPassword else {
+                    backupPasswordPrompt = .set
+                    backupMessage = "Enter the backup password again before Wastly can save an encrypted backup."
+                    return
+                }
+                password = storedPassword
+            } else {
+                if storedPassword != nil {
+                    let latestEnvelope = try await backupWorkflow.latestEnvelope()
+                    guard latestEnvelope?.backupPasswordEnabled != true else {
+                        backupPasswordPrompt = .change
+                        backupMessage = "The existing iCloud backup is password-protected. Choose a password before replacing it."
+                        return
+                    }
+                    try await backupPasswordStore.delete()
+                }
+                password = nil
+            }
             let payload = try BackupSnapshot.make(in: context)
-            let envelope = try await backupWorkflow.upload(payload: payload)
+            let envelope = try await backupWorkflow.upload(payload: payload, password: password)
             settings.lastBackupAt = envelope.createdAt
             try context.save()
-            backupMessage = "Backup saved to your private iCloud."
+            backupMessage = password == nil
+                ? "Backup saved to your private iCloud."
+                : "Encrypted backup saved to your private iCloud."
         } catch {
             backupMessage = backupErrorMessage(error)
         }
     }
 
     @discardableResult
-    func restoreFromICloud(showMissingMessage: Bool = true) async -> Bool {
+    func setBackupPassword(_ password: String) async -> Bool {
+        guard !backupIsRunning else { return false }
+        guard BackupPasswordPolicy.isValid(password) else {
+            backupMessage = "Use at least 8 non-space characters for the backup password."
+            return false
+        }
+
+        let context = ModelContext(container)
+        let settings = Self.settings(in: context)
+        guard settings.iCloudBackupEnabled else {
+            backupMessage = "Turn on iCloud backup first."
+            return false
+        }
+
+        backupIsRunning = true
+        defer { backupIsRunning = false }
+
+        do {
+            var payload = try BackupSnapshot.make(in: context)
+            if var payloadSettings = payload.settings {
+                payloadSettings.backupPasswordEnabled = true
+                payload.settings = payloadSettings
+            }
+            let envelope = try await backupWorkflow.upload(
+                payload: payload,
+                password: password
+            )
+            do {
+                try await backupPasswordStore.save(password)
+            } catch {
+                settings.backupPasswordEnabled = true
+                settings.lastBackupAt = envelope.createdAt
+                try? context.save()
+                backupPasswordPrompt = .change
+                backupMessage = "The iCloud backup is encrypted, but this iPhone could not save its password. Enter it again."
+                return false
+            }
+            settings.backupPasswordEnabled = true
+            settings.lastBackupAt = envelope.createdAt
+            try context.save()
+            backupPasswordPrompt = nil
+            backupMessage = "Backup password saved. A new encrypted backup is in iCloud."
+            return true
+        } catch {
+            backupMessage = backupErrorMessage(error)
+            return false
+        }
+    }
+
+    @discardableResult
+    func removeBackupPassword() async -> Bool {
+        guard !backupIsRunning else { return false }
+        let context = ModelContext(container)
+        let settings = Self.settings(in: context)
+        guard settings.backupPasswordEnabled else {
+            backupMessage = "The iCloud backup does not have a password."
+            return true
+        }
+
+        backupIsRunning = true
+        defer { backupIsRunning = false }
+
+        do {
+            var payload = try BackupSnapshot.make(in: context)
+            if var payloadSettings = payload.settings {
+                payloadSettings.backupPasswordEnabled = false
+                payload.settings = payloadSettings
+            }
+            let envelope = try await backupWorkflow.upload(payload: payload)
+            try await backupPasswordStore.delete()
+            settings.backupPasswordEnabled = false
+            settings.lastBackupAt = envelope.createdAt
+            try context.save()
+            backupPasswordPrompt = nil
+            backupMessage = "Backup password removed. A new unencrypted private backup is in iCloud."
+            return true
+        } catch {
+            backupMessage = "Couldn’t remove the backup password. The local diary is unchanged; try again."
+            return false
+        }
+    }
+
+    @discardableResult
+    func restoreFromICloud(
+        password: String? = nil,
+        showMissingMessage: Bool = true
+    ) async -> Bool {
         guard !backupIsRunning else { return false }
         backupIsRunning = true
         defer { backupIsRunning = false }
@@ -211,10 +331,29 @@ final class SessionStore: ObservableObject {
                 }
                 return false
             }
+            let restorePassword: String?
+            if envelope.backupPasswordEnabled {
+                if let password {
+                    restorePassword = password
+                } else {
+                    restorePassword = try await backupPasswordStore.load()
+                }
+                guard restorePassword != nil else {
+                    backupPasswordPrompt = .restore
+                    backupMessage = "Enter the password used to protect this iCloud backup."
+                    return false
+                }
+            } else {
+                restorePassword = nil
+            }
+
+            let payload = try await Task.detached(priority: .userInitiated) {
+                try BackupCrypto.open(envelope, password: restorePassword)
+            }.value
             let context = ModelContext(container)
             try BackupRestore.apply(
-                envelope: envelope,
-                password: nil,
+                payload: payload,
+                backupCreatedAt: envelope.createdAt,
                 mode: .replace,
                 context: context
             )
@@ -223,12 +362,32 @@ final class SessionStore: ObservableObject {
             selectedChildID = children.first?.id
             showingOnboarding = children.isEmpty
             isLocked = false
+            if let restorePassword {
+                do {
+                    try await backupPasswordStore.save(restorePassword)
+                    backupPasswordPrompt = nil
+                } catch {
+                    backupPasswordPrompt = .change
+                    backupMessage = "Backup restored, but its password could not be saved on this iPhone. Enter it again."
+                    return true
+                }
+            } else {
+                do {
+                    try await backupPasswordStore.delete()
+                    backupPasswordPrompt = nil
+                } catch {
+                    backupPasswordPrompt = nil
+                    backupMessage = "Backup restored, but an old password could not be cleared from this iPhone. Unlock it, then restore again to finish cleanup."
+                    return true
+                }
+            }
             backupMessage = children.isEmpty
                 ? "The iCloud backup did not contain a child profile."
                 : "Backup restored from your private iCloud."
-            return !children.isEmpty
+            return true
         } catch BackupError.wrongPassword {
-            backupMessage = "This iCloud backup needs its password before it can be restored."
+            backupPasswordPrompt = .restore
+            backupMessage = "That password did not unlock the backup. Your local diary is unchanged."
             return false
         } catch {
             if showMissingMessage { backupMessage = backupErrorMessage(error) }

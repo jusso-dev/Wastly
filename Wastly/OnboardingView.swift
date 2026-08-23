@@ -12,6 +12,9 @@ struct OnboardingView: View {
     @State private var faceID = false
     @State private var backup = false
     @State private var backupPassword = false
+    @State private var backupPasswordText = ""
+    @State private var backupPasswordConfirmation = ""
+    @State private var isSaving = false
     @State private var saveError: String?
 
     var body: some View {
@@ -23,7 +26,7 @@ struct OnboardingView: View {
                 Text("A private diary of what they ate and what they left.")
                     .font(.wastlyBody)
                     .foregroundStyle(WastlyTheme.ink)
-                Text("Logs stay on this iPhone. Backup uses your iCloud. Food lookup is the only thing that goes to the internet.")
+                Text("Logs stay on this iPhone. Only the cloud features you choose—such as iCloud backup and food lookup—use the internet.")
                     .font(.wastlyBody)
                     .foregroundStyle(WastlyTheme.muted)
 
@@ -50,12 +53,35 @@ struct OnboardingView: View {
                         Toggle("iCloud backup", isOn: $backup)
                         Toggle("Password on the backup", isOn: $backupPassword)
                             .disabled(!backup)
+                        if backup && backupPassword {
+                            SecureField("Backup password", text: $backupPasswordText)
+                                .textContentType(.newPassword)
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled()
+                                .accessibilityIdentifier("onboarding.backupPassword")
+                            SecureField("Confirm backup password", text: $backupPasswordConfirmation)
+                                .textContentType(.newPassword)
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled()
+                                .accessibilityIdentifier("onboarding.backupPasswordConfirmation")
+                            Text("Use at least 8 non-space characters. Wastly cannot recover a forgotten backup password.")
+                                .font(.wastlyCaption)
+                                .foregroundStyle(WastlyTheme.muted)
+                        }
                     }
                     .font(.wastlyBody)
                 }
 
-                Button(action: save) {
-                    Text("Open Today")
+                Button {
+                    Task { await save() }
+                } label: {
+                    Group {
+                        if isSaving {
+                            ProgressView()
+                        } else {
+                            Text("Open Today")
+                        }
+                    }
                         .font(.wastlyBody.weight(.semibold))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
@@ -72,10 +98,22 @@ struct OnboardingView: View {
         } message: {
             Text(saveError ?? "Nothing was saved. Try again.")
         }
+        .onChange(of: backup) { _, enabled in
+            if !enabled {
+                backupPassword = false
+                backupPasswordText = ""
+                backupPasswordConfirmation = ""
+            }
+        }
     }
 
     private var canSave: Bool {
-        !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        guard !isSaving,
+              !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        else { return false }
+        guard backup && backupPassword else { return true }
+        return BackupPasswordPolicy.isValid(backupPasswordText)
+            && backupPasswordText == backupPasswordConfirmation
     }
 
     private var showingSaveError: Binding<Bool> {
@@ -85,7 +123,10 @@ struct OnboardingView: View {
         )
     }
 
-    private func save() {
+    private func save() async {
+        guard canSave else { return }
+        isSaving = true
+        defer { isSaving = false }
         do {
             let child = try OnboardingStore.save(
                 OnboardingInput(
@@ -95,13 +136,21 @@ struct OnboardingView: View {
                     weightKilograms: Double(weightText),
                     faceIDEnabled: faceID,
                     iCloudBackupEnabled: backup,
-                    backupPasswordEnabled: backupPassword
+                    backupPasswordEnabled: false
                 ),
                 in: context
             )
             session.selectedChildID = child.id
-            session.showingOnboarding = false
             session.isLocked = false
+            if backupPassword {
+                let passwordSaved = await session.setBackupPassword(backupPasswordText)
+                if !passwordSaved, session.backupPasswordPrompt == nil {
+                    session.backupPasswordPrompt = .set
+                }
+            } else if backup {
+                await session.backupNow()
+            }
+            session.showingOnboarding = false
         } catch {
             saveError = "Nothing was saved. Check available storage and try again."
         }

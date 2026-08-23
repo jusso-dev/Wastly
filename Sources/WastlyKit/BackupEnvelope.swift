@@ -14,6 +14,7 @@ public struct BackupEnvelope: Codable, Equatable, Sendable {
     public var plaintextJSON: Data?
     public var salt: Data?
     public var nonce: Data?
+    public var kdfIterations: Int?
 
     public init(
         schemaVersion: Int = Self.currentSchemaVersion,
@@ -22,7 +23,8 @@ public struct BackupEnvelope: Codable, Equatable, Sendable {
         ciphertext: Data? = nil,
         plaintextJSON: Data? = nil,
         salt: Data? = nil,
-        nonce: Data? = nil
+        nonce: Data? = nil,
+        kdfIterations: Int? = nil
     ) {
         self.schemaVersion = schemaVersion
         self.createdAt = createdAt
@@ -31,6 +33,7 @@ public struct BackupEnvelope: Codable, Equatable, Sendable {
         self.plaintextJSON = plaintextJSON
         self.salt = salt
         self.nonce = nonce
+        self.kdfIterations = kdfIterations
     }
 }
 
@@ -264,6 +267,9 @@ public enum BackupSnapshot: Sendable {
 }
 
 public enum BackupCrypto {
+    public static let currentKDFIterations = 600_000
+    public static let legacyKDFIterations = 200_000
+
     public static func seal(
         payload: BackupPayload,
         password: String?,
@@ -277,8 +283,12 @@ public enum BackupCrypto {
                 plaintextJSON: json
             )
         }
-        let salt = random(16)
-        let key = deriveKey(password: password, salt: salt)
+        let salt = try random(16)
+        let key = try deriveKey(
+            password: password,
+            salt: salt,
+            iterations: currentKDFIterations
+        )
         let sealed = try AES.GCM.seal(json, using: key)
         guard let combined = sealed.combined else { throw BackupError.sealFailed }
         return BackupEnvelope(
@@ -286,7 +296,8 @@ public enum BackupCrypto {
             backupPasswordEnabled: true,
             ciphertext: combined,
             salt: salt,
-            nonce: Data(sealed.nonce)
+            nonce: Data(sealed.nonce),
+            kdfIterations: currentKDFIterations
         )
     }
 
@@ -298,7 +309,15 @@ public enum BackupCrypto {
             guard let password, !password.isEmpty, let salt = envelope.salt, let data = envelope.ciphertext else {
                 throw BackupError.wrongPassword
             }
-            let key = deriveKey(password: password, salt: salt)
+            let iterations = envelope.kdfIterations ?? legacyKDFIterations
+            guard (100_000...2_000_000).contains(iterations) else {
+                throw BackupError.invalidKDFIterations(iterations)
+            }
+            let key = try deriveKey(
+                password: password,
+                salt: salt,
+                iterations: iterations
+            )
             do {
                 let box = try AES.GCM.SealedBox(combined: data)
                 let json = try AES.GCM.open(box, using: key)
@@ -311,32 +330,45 @@ public enum BackupCrypto {
         return try JSONDecoder().decode(BackupPayload.self, from: json)
     }
 
-    public static func deriveKey(password: String, salt: Data) -> SymmetricKey {
+    public static func deriveKey(
+        password: String,
+        salt: Data,
+        iterations: Int = currentKDFIterations
+    ) throws -> SymmetricKey {
+        guard (100_000...2_000_000).contains(iterations) else {
+            throw BackupError.invalidKDFIterations(iterations)
+        }
         var derived = Data(count: 32)
-        derived.withUnsafeMutableBytes { out in
+        let status: Int32 = derived.withUnsafeMutableBytes { out in
             password.withCString { pw in
                 salt.withUnsafeBytes { saltBuf in
-                    _ = CCKeyDerivationPBKDF(
+                    CCKeyDerivationPBKDF(
                         CCPBKDFAlgorithm(kCCPBKDF2),
                         pw,
                         password.utf8.count,
                         saltBuf.bindMemory(to: UInt8.self).baseAddress,
                         salt.count,
                         CCPseudoRandomAlgorithm(kCCPRFHmacAlgSHA256),
-                        UInt32(200_000),
+                        UInt32(iterations),
                         out.bindMemory(to: UInt8.self).baseAddress,
                         32
                     )
                 }
             }
         }
+        guard status == kCCSuccess else {
+            throw BackupError.keyDerivationFailed(status)
+        }
         return SymmetricKey(data: derived)
     }
 
-    private static func random(_ count: Int) -> Data {
+    private static func random(_ count: Int) throws -> Data {
         var data = Data(count: count)
-        data.withUnsafeMutableBytes { buf in
-            _ = SecRandomCopyBytes(kSecRandomDefault, count, buf.baseAddress!)
+        let status = data.withUnsafeMutableBytes { buf in
+            SecRandomCopyBytes(kSecRandomDefault, count, buf.baseAddress!)
+        }
+        guard status == errSecSuccess else {
+            throw BackupError.randomGenerationFailed(status)
         }
         return data
     }
@@ -347,4 +379,7 @@ public enum BackupError: Error, Equatable, Sendable {
     case missingPayload
     case sealFailed
     case unsupportedSchemaVersion(Int)
+    case invalidKDFIterations(Int)
+    case keyDerivationFailed(Int32)
+    case randomGenerationFailed(OSStatus)
 }

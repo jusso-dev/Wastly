@@ -9,6 +9,7 @@ struct SettingsView: View {
     @Query private var catalogState: [CatalogState]
     @State private var showingClearCacheConfirmation = false
     @State private var showingRestoreConfirmation = false
+    @State private var showingRemovePasswordConfirmation = false
     @State private var cacheMessage: String?
 
     private var settings: AppSettings {
@@ -62,7 +63,28 @@ struct SettingsView: View {
                 }
                 Section("Backup") {
                     Toggle("iCloud backup", isOn: backupBinding)
-                    Toggle("Password on the backup", isOn: boolBinding(\.backupPasswordEnabled))
+                    LabeledContent("Backup password") {
+                        Text(settings.backupPasswordEnabled ? "On" : "Off")
+                            .foregroundStyle(settings.backupPasswordEnabled ? WastlyTheme.sage : WastlyTheme.muted)
+                    }
+                    if settings.backupPasswordEnabled {
+                        Button("Change backup password") {
+                            session.backupPasswordPrompt = .change
+                        }
+                        .disabled(session.backupIsRunning)
+                        Button("Remove backup password", role: .destructive) {
+                            showingRemovePasswordConfirmation = true
+                        }
+                        .disabled(session.backupIsRunning)
+                    } else {
+                        Button("Add backup password") {
+                            session.backupPasswordPrompt = .set
+                        }
+                        .disabled(!settings.iCloudBackupEnabled || session.backupIsRunning)
+                    }
+                    Text("The password stays in this device’s Keychain and is never stored in iCloud. If you forget it, that backup cannot be recovered; the diary on this iPhone stays safe.")
+                        .font(.wastlyCaption)
+                        .foregroundStyle(WastlyTheme.muted)
                     Text("Profiles, measurements, diary logs, custom foods, and settings are saved privately to your Apple ID. Downloaded food data is not included.")
                         .font(.wastlyCaption)
                         .foregroundStyle(WastlyTheme.muted)
@@ -154,6 +176,18 @@ struct SettingsView: View {
         } message: {
             Text("Child profiles, measurements, diary logs, custom foods, and settings on this iPhone will be replaced. Downloaded food data stays local.")
         }
+        .confirmationDialog(
+            "Remove the backup password?",
+            isPresented: $showingRemovePasswordConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Remove password", role: .destructive) {
+                Task { await session.removeBackupPassword() }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Wastly will replace the encrypted iCloud envelope with an unencrypted private backup, then remove the password from this iPhone.")
+        }
     }
 
     private var unitBinding: Binding<EnergyUnit> {
@@ -212,5 +246,105 @@ struct SettingsView: View {
                 cacheMessage = "Couldn’t clear the cache. Check available storage and try again."
             }
         }
+    }
+}
+
+struct BackupPasswordSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var session: SessionStore
+    let purpose: BackupPasswordPromptPurpose
+    @State private var password = ""
+    @State private var confirmation = ""
+    @State private var isSubmitting = false
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    Text(explanation)
+                        .font(.wastlyBody)
+                    SecureField("Backup password", text: $password)
+                        .textContentType(purpose == .restore ? .password : .newPassword)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .accessibilityIdentifier("backupPassword.password")
+                    if purpose != .restore {
+                        SecureField("Confirm password", text: $confirmation)
+                            .textContentType(.newPassword)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .accessibilityIdentifier("backupPassword.confirmation")
+                    }
+                }
+                Section {
+                    Text("Wastly keeps the password only in this device’s Keychain. It is never placed in iCloud. A forgotten password cannot be recovered, but local diary data remains available.")
+                        .font(.wastlyCaption)
+                        .foregroundStyle(WastlyTheme.muted)
+                    if let message = session.backupMessage {
+                        Text(message)
+                            .font(.wastlyCaption)
+                            .foregroundStyle(WastlyTheme.muted)
+                            .accessibilityIdentifier("backupPassword.message")
+                    }
+                }
+            }
+            .navigationTitle(title)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        session.backupPasswordPrompt = nil
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(submitLabel) {
+                        Task { await submit() }
+                    }
+                    .disabled(!canSubmit || isSubmitting || session.backupIsRunning)
+                    .accessibilityIdentifier("backupPassword.submit")
+                }
+            }
+        }
+    }
+
+    private var title: String {
+        switch purpose {
+        case .set: "Protect backup"
+        case .change: "Change password"
+        case .restore: "Unlock backup"
+        }
+    }
+
+    private var explanation: String {
+        switch purpose {
+        case .set:
+            "Choose a password to encrypt the next iCloud backup."
+        case .change:
+            "Choose a new password. Wastly will replace the current iCloud backup with one encrypted by it."
+        case .restore:
+            "Enter the password that was used when this iCloud backup was created."
+        }
+    }
+
+    private var submitLabel: String {
+        purpose == .restore ? "Restore" : "Save"
+    }
+
+    private var canSubmit: Bool {
+        if purpose == .restore { return !password.isEmpty }
+        return BackupPasswordPolicy.isValid(password) && password == confirmation
+    }
+
+    private func submit() async {
+        isSubmitting = true
+        defer { isSubmitting = false }
+        let succeeded: Bool
+        switch purpose {
+        case .set, .change:
+            succeeded = await session.setBackupPassword(password)
+        case .restore:
+            succeeded = await session.restoreFromICloud(password: password)
+        }
+        if succeeded { dismiss() }
     }
 }

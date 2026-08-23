@@ -5,23 +5,60 @@ import Testing
 
 struct BackupTests {
     @Test func passwordRoundTrip() throws {
+        let password = "correct-horse"
         let payload = BackupPayload(
             children: [BackupChild(id: UUID(), firstName: "Sam", dateOfBirth: Date(timeIntervalSince1970: 1_200_000_000))],
             logs: [],
             customFoods: [],
             energyUnit: .kilojoules
         )
-        let envelope = try BackupCrypto.seal(payload: payload, password: "correct-horse")
-        let opened = try BackupCrypto.open(envelope, password: "correct-horse")
+        let envelope = try BackupCrypto.seal(payload: payload, password: password)
+        let opened = try BackupCrypto.open(envelope, password: password)
         #expect(opened.children.first?.firstName == "Sam")
+        #expect(envelope.kdfIterations == BackupCrypto.currentKDFIterations)
+        #expect(envelope.plaintextJSON == nil)
+        #expect(envelope.ciphertext != nil)
+        let encodedEnvelope = try JSONEncoder().encode(envelope)
+        #expect(!String(decoding: encodedEnvelope, as: UTF8.self).contains(password))
     }
 
     @Test func wrongPasswordFailsClosed() throws {
-        let payload = BackupPayload(children: [], logs: [], customFoods: [], energyUnit: .kilojoules)
+        let replacementID = UUID()
+        let payload = BackupPayload(
+            children: [BackupChild(id: replacementID, firstName: "Cloud child", dateOfBirth: .now)],
+            logs: [],
+            customFoods: [],
+            energyUnit: .kilojoules
+        )
         let envelope = try BackupCrypto.seal(payload: payload, password: "right")
+
+        let container = try WastlyContainer.make(inMemory: true)
+        let context = ModelContext(container)
+        let localChild = Child(firstName: "Local child", dateOfBirth: .now)
+        context.insert(localChild)
+        context.insert(FoodLog(
+            meal: .breakfast,
+            foodName: "Local Weet-Bix",
+            eatenGrams: 30,
+            wastedGrams: 0,
+            kilojoulesPer100g: 1_470,
+            child: localChild
+        ))
+        try context.save()
+
         #expect(throws: BackupError.wrongPassword) {
-            _ = try BackupCrypto.open(envelope, password: "wrong")
+            try BackupRestore.apply(
+                envelope: envelope,
+                password: "wrong",
+                mode: .replace,
+                context: context
+            )
         }
+        let children = try context.fetch(FetchDescriptor<Child>())
+        let logs = try context.fetch(FetchDescriptor<FoodLog>())
+        #expect(children.map(\.id) == [localChild.id])
+        #expect(!children.contains { $0.id == replacementID })
+        #expect(logs.map(\.foodName) == ["Local Weet-Bix"])
     }
 
     @Test func versionedCloudEnvelopeRestoresAWeetBixDiary() async throws {
@@ -169,6 +206,23 @@ struct BackupTests {
 
         #expect(throws: BackupError.unsupportedSchemaVersion(envelope.schemaVersion)) {
             _ = try BackupCrypto.open(envelope, password: nil)
+        }
+    }
+
+    @Test func passwordPolicyRequiresEightNonWhitespaceCharacters() {
+        #expect(!BackupPasswordPolicy.isValid("short"))
+        #expect(!BackupPasswordPolicy.isValid("        "))
+        #expect(!BackupPasswordPolicy.isValid("a       "))
+        #expect(BackupPasswordPolicy.isValid("long enough"))
+    }
+
+    @Test func hostileKDFCostIsRejectedBeforeDerivation() throws {
+        let payload = BackupPayload(children: [], logs: [], customFoods: [], energyUnit: .kilojoules)
+        var envelope = try BackupCrypto.seal(payload: payload, password: "long-enough")
+        envelope.kdfIterations = 50_000_000
+
+        #expect(throws: BackupError.invalidKDFIterations(50_000_000)) {
+            _ = try BackupCrypto.open(envelope, password: "long-enough")
         }
     }
 }

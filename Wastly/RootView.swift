@@ -35,6 +35,11 @@ struct RootView: View {
                 session.selectedChildID = children.first?.id
             }
         }
+        .sheet(item: $session.backupPasswordPrompt) { purpose in
+            BackupPasswordSheet(purpose: purpose)
+                .environmentObject(session)
+                .presentationDetents([.medium, .large])
+        }
     }
 }
 
