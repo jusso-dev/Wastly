@@ -8,13 +8,13 @@ Private offline-first iOS diary of what a child eats and wastes.
 
 Native SwiftUI. No account. Child logs stay on the iPhone. Energy is stored as kJ. Display can show kcal.
 
-Food lookup is local first: recents, custom foods, a bundled seed catalog, then a versioned catalog pull when a host is set. On a miss it can call Open Food Facts and USDA. Put the USDA key in Secrets.xcconfig, not git. NUTTAB is later, not v1.
+Food lookup is local first: recents, custom foods, a bundled seed catalog, then Open Food Facts and USDA results merged without duplicates. Copy `Secrets.xcconfig.example` to the gitignored `Secrets.xcconfig` for a USDA data.gov key. Open Food Facts barcode lookup works without one. NUTTAB is later, not v1.
 
 Optional cheap LLM can turn totals into fun facts. It never gets body stats, photos, or date of birth.
 
 Privacy and App Store disclosure notes: [docs/PRIVACY.md](docs/PRIVACY.md).
 
-This cut is WastlyKit plus the SwiftUI app shell. Vision OCR, CloudKit, and a live catalog host are not wired yet. Backup code exists as an envelope (wrong password does not change the store). Face ID lock is in the shell. Barcode is type plus Match, not a live camera.
+This cut is WastlyKit plus the SwiftUI app shell. Vision OCR, CloudKit, and a live catalog host are not wired yet. Backup code exists as an envelope (wrong password does not change the store). Face ID lock and camera barcode scanning are in the shell.
 
 App icon art: [docs/app-icon.svg](docs/app-icon.svg) and [docs/app-icon.jpg](docs/app-icon.jpg). The Xcode catalog uses `Wastly/Assets.xcassets/AppIcon.appiconset/AppIcon.png` (1024 PNG).
 

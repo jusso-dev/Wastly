@@ -10,15 +10,15 @@ let store = LocalFoodStore(container: container)
 await store.insertSeedIfEmpty()
 let directory = LocalFirstFoodDirectory(
     store: store,
-    live: RemoteFoodLookup(usdaAPIKey: nil)
+    live: RemoteFoodLookup(usdaAPIKey: "<key loaded from configuration>")
 )
 ```
 
 Energy is kJ in the store. Use `Energy.display` for kJ/kcal labels. Barcodes strip leading zeros.
 
-Put the USDA key in Secrets.xcconfig. That file is gitignored.
+For USDA, copy `Secrets.xcconfig.example` to `Secrets.xcconfig` and replace the placeholder. The project includes this file when present, and git ignores it. Never put a live key in tracked source.
 
-Tabs: Today, Diary, Facts, Kids, Settings. The log sheet search is wired. Barcode is a typed field plus Match, not a live camera. App Icon is `AppIcon.png` in the asset catalog (1024 PNG).
+Tabs: Today, Diary, Facts, Kids, Settings. The log sheet supports search, typed barcode matching, and camera scanning. App Icon is `AppIcon.png` in the asset catalog (1024 PNG).
 
 Do not give medical advice, BMI lectures, or healthy-weight scores.
 

@@ -1,0 +1,17 @@
+{
+  "dataType": "Foundation",
+  "description": "Apples, raw, with skin",
+  "fdcId": 171688,
+  "foodNutrients": [
+    {
+      "amount": 52,
+      "nutrient": {
+        "id": 1008,
+        "name": "Energy",
+        "number": "208",
+        "rank": 300,
+        "unitName": "kcal"
+      }
+    }
+  ]
+}

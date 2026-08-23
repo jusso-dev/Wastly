@@ -1,0 +1,14 @@
+{
+  "code": "3017620422003",
+  "product": {
+    "brands": "Ferrero",
+    "code": "3017620422003",
+    "nutriments": {
+      "energy-kcal_100g": "539"
+    },
+    "product_name": "Nutella",
+    "serving_quantity": "15"
+  },
+  "status": 1,
+  "status_verbose": "product found"
+}
