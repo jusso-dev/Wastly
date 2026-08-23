@@ -17,6 +17,7 @@
 		A1000000000000000000006C /* DiaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000009 /* DiaryView.swift */; };
 		A1000000000000000000006D /* FactsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000000A /* FactsView.swift */; };
 		A1000000000000000000006E /* KidsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000000B /* KidsView.swift */; };
+		A10000000000000000000071 /* ChildProfileEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000000E /* ChildProfileEditor.swift */; };
 		A1000000000000000000006F /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000000C /* SettingsView.swift */; };
 		A10000000000000000000070 /* LogSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000000D /* LogSheet.swift */; };
 		A10000000000000000000040 /* WastlyKit in Frameworks */ = {isa = PBXBuildFile; productRef = A10000000000000000000041 /* WastlyKit */; };
@@ -36,6 +37,7 @@
 		A10000000000000000000009 /* DiaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryView.swift; sourceTree = "<group>"; };
 		A1000000000000000000000A /* FactsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FactsView.swift; sourceTree = "<group>"; };
 		A1000000000000000000000B /* KidsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KidsView.swift; sourceTree = "<group>"; };
+		A1000000000000000000000E /* ChildProfileEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChildProfileEditor.swift; sourceTree = "<group>"; };
 		A1000000000000000000000C /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		A1000000000000000000000D /* LogSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogSheet.swift; sourceTree = "<group>"; };
 		A10000000000000000000042 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -81,6 +83,7 @@
 				A10000000000000000000009 /* DiaryView.swift */,
 				A1000000000000000000000A /* FactsView.swift */,
 				A1000000000000000000000B /* KidsView.swift */,
+				A1000000000000000000000E /* ChildProfileEditor.swift */,
 				A1000000000000000000000C /* SettingsView.swift */,
 				A1000000000000000000000D /* LogSheet.swift */,
 				A10000000000000000000042 /* Assets.xcassets */,
@@ -196,6 +199,7 @@
 				A1000000000000000000006C /* DiaryView.swift in Sources */,
 				A1000000000000000000006D /* FactsView.swift in Sources */,
 				A1000000000000000000006E /* KidsView.swift in Sources */,
+				A10000000000000000000071 /* ChildProfileEditor.swift in Sources */,
 				A1000000000000000000006F /* SettingsView.swift in Sources */,
 				A10000000000000000000070 /* LogSheet.swift in Sources */,
 			);
