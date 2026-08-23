@@ -1,9 +1,10 @@
 import Foundation
 import SwiftData
 
-/// Schema version 1. Lightweight migration only: additive optionals.
-public enum WastlySchema {
+/// Schema version 1. Future versions should use lightweight migration stages for additive changes.
+public enum WastlySchema: VersionedSchema {
     public static let version = 1
+    public static let versionIdentifier = Schema.Version(1, 0, 0)
 
     public static var models: [any PersistentModel.Type] {
         [
@@ -16,6 +17,16 @@ public enum WastlySchema {
             AppSettings.self,
             CatalogState.self,
         ]
+    }
+}
+
+public enum WastlyMigrationPlan: SchemaMigrationPlan {
+    public static var schemas: [any VersionedSchema.Type] {
+        [WastlySchema.self]
+    }
+
+    public static var stages: [MigrationStage] {
+        []
     }
 }
 
