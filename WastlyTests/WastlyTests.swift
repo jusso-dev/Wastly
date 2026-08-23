@@ -21,6 +21,56 @@ struct WastlyTests {
         #expect(Energy.display(4184, unit: .kilojoules).hasSuffix(" kJ"))
     }
 
+    @Test @MainActor func settingsUnitPersistsAndCacheClearKeepsDiary() async throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("WastlySettingsTests-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let storeURL = directory.appendingPathComponent("Wastly.store")
+        let logID = UUID()
+
+        do {
+            let container = try WastlyContainer.make(url: storeURL)
+            let context = ModelContext(container)
+            let child = Child(firstName: "Sam", dateOfBirth: .now)
+            let settings = SessionStore.settings(in: context)
+            #expect(settings.energyUnit == .kilojoules)
+            settings.energyUnit = .kilocalories
+            let log = FoodLog(
+                id: logID,
+                meal: .breakfast,
+                foodName: "Weet-Bix",
+                eatenGrams: 30,
+                wastedGrams: 10,
+                kilojoulesPer100g: 1_470,
+                child: child
+            )
+            context.insert(child)
+            context.insert(log)
+            try context.save()
+
+            let store = LocalFoodStore(container: container)
+            await store.cacheLookup(FoodHit(
+                id: "off:downloaded",
+                name: "Downloaded food",
+                kilojoulesPer100g: 300,
+                origin: .openFoodFacts
+            ))
+            #expect(Energy.display(log.eatenKilojoules, unit: settings.energyUnit).hasSuffix(" kcal"))
+            #expect(try await store.clearCacheLeavingCustomAndLogs() == 1)
+        }
+
+        let reopened = try WastlyContainer.make(url: storeURL)
+        let context = ModelContext(reopened)
+        let settings = try #require(context.fetch(FetchDescriptor<AppSettings>()).first)
+        let logs = try context.fetch(FetchDescriptor<FoodLog>())
+        let log = try #require(logs.first)
+        #expect(settings.energyUnit == .kilocalories)
+        #expect(logs.map(\.id) == [logID])
+        #expect(Energy.display(log.eatenKilojoules, unit: settings.energyUnit).hasSuffix(" kcal"))
+        #expect(try context.fetch(FetchDescriptor<FoodCache>()).isEmpty)
+    }
+
     @Test func backupPasswordKeychainCanSaveUpdateAndDelete() async throws {
         let store = KeychainBackupPasswordStore(
             service: "au.yumait.Wastly.tests.\(UUID().uuidString)",
