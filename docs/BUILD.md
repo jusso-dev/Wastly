@@ -1,9 +1,25 @@
-# Wastly — native Swift iOS build prompt
+# Wastly build
 
-Build **Wastly**, a native SwiftUI iOS app. One job: a parent keeps a private diary of how much their child **eats** and how much they **waste**. It is offline-first. The only network calls are food lookup (search, barcode, optional photo OCR match) and a cheap LLM that turns totals into fun facts. Child name, age, weight, height, logs, and photos never leave the device except as an iCloud backup the parent controls.
+Open the Xcode project on this branch and add the local Swift package at the repo root (`WastlyKit`). iOS 18+. Swift 6.
 
-This is not MyFitnessPal for adults. It is not a clinical dietitian. Do not give medical advice, BMI lectures, or healthy-weight scores.
+```swift
+import WastlyKit
 
-Reference the Lifesum iOS Tracking food intake flow on Mobbin (https://mobbin.com/explore/flows/3a8645fc-a11d-4896-9727-009752197d2b) and the Lifesum Tracking a meal flow (https://mobbin.com/explore/flows/448ee6dd-7e6c-401c-bce1-c26ed999f387). Steal the structure, not the brand. Keep Wastly calmer and more journal-like than a gym tracker.
+let container = try WastlyContainer.make()
+let store = LocalFoodStore(container: container)
+await store.insertSeedIfEmpty()
+let directory = LocalFirstFoodDirectory(
+    store: store,
+    live: RemoteFoodLookup(usdaAPIKey: nil)
+)
+```
 
-Full product rules, data model, lookup, facts, screens, and acceptance are in this file as filed in the original prompt. Follow the GitHub issues on this repo for the build order.
+Energy is kJ in the store. Use `Energy.display` for kJ/kcal labels. Barcodes strip leading zeros.
+
+Put the USDA key in Secrets.xcconfig. That file is gitignored.
+
+Tabs on this branch: Today, Diary, Facts, Kids, Settings. The log sheet search is wired. Barcode is a typed field plus Match, not a live camera. The app icon asset is empty. Art is in `docs/`.
+
+Do not give medical advice, BMI lectures, or healthy-weight scores.
+
+The full product rules live in the GitHub issues. This file is the build map, not a second spec.
