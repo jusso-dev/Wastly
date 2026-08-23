@@ -16,7 +16,7 @@ Optional cheap LLM can turn totals into fun facts. It never gets body stats, pho
 
 Privacy and App Store disclosure notes: [docs/PRIVACY.md](docs/PRIVACY.md).
 
-Wastly includes on-device Vision OCR, camera barcode scanning, Face ID lock, and optional private CloudKit backup. A parent can add a device-only password that encrypts the backup before upload; the password is never stored in iCloud and cannot be recovered. Backup runs when the app becomes active and can also be started or restored from Settings. Before distributing a build, create the `iCloud.au.yumait.Wastly` container for the signing team and deploy the `WastlyBackup` record schema to production in CloudKit Console.
+Wastly includes on-device Vision OCR, camera barcode scanning, an optional Face ID or device-passcode diary lock, and optional private CloudKit backup. A parent can add a device-only password that encrypts the backup before upload; the password is never stored in iCloud and cannot be recovered. Backup runs when the app becomes active and can also be started or restored from Settings. Before distributing a build, create the `iCloud.au.yumait.Wastly` container for the signing team and deploy the `WastlyBackup` record schema to production in CloudKit Console.
 
 App icon art: [docs/app-icon.svg](docs/app-icon.svg) and [docs/app-icon.jpg](docs/app-icon.jpg). The Xcode catalog uses `Wastly/Assets.xcassets/AppIcon.appiconset/AppIcon.png` (1024 PNG).
 
