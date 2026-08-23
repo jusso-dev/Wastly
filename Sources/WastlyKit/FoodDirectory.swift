@@ -144,6 +144,7 @@ public struct RemoteFoodLookup: LiveFoodLookup {
     }
 
     private func getJSON(_ url: URL) async -> [String: Any]? {
+        guard PrivacyAllowlist.isAllowedFoodURL(url) else { return nil }
         var request = URLRequest(url: url)
         request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
         do {

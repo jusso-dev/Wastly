@@ -16,14 +16,26 @@ public enum PrivacyAllowlist: Sendable {
         return openFoodFactsHosts.contains(lower) || usdaHosts.contains(lower)
     }
 
+    public static func isAllowedFoodURL(_ url: URL) -> Bool {
+        isSecure(url) && isAllowedFoodHost(url.host ?? "")
+    }
+
     public static func isAllowedCatalogURL(_ url: URL, extraHosts: Set<String> = []) -> Bool {
-        guard let host = url.host?.lowercased() else { return false }
+        guard isSecure(url), let host = url.host?.lowercased() else { return false }
         if isAllowedFoodHost(host) { return true }
-        return extraHosts.contains(host)
+        return Set(extraHosts.map { $0.lowercased() }).contains(host)
     }
 
     public static func isAllowedLLMHost(_ host: String, configured: Set<String>) -> Bool {
-        configured.contains(host.lowercased())
+        Set(configured.map { $0.lowercased() }).contains(host.lowercased())
+    }
+
+    public static func isAllowedLLMURL(_ url: URL, configuredHosts: Set<String>) -> Bool {
+        isSecure(url) && isAllowedLLMHost(url.host ?? "", configured: configuredHosts)
+    }
+
+    private static func isSecure(_ url: URL) -> Bool {
+        url.scheme?.lowercased() == "https" && url.user == nil && url.password == nil
     }
 }
 
@@ -56,6 +68,7 @@ public struct FactLLMPayload: Codable, Equatable, Sendable {
 public enum PrivacyError: Error, Sendable {
     case unexpectedPayload
     case forbiddenField(String)
+    case disallowedDestination
 }
 
 public enum PrivacyGuard: Sendable {
@@ -65,9 +78,26 @@ public enum PrivacyGuard: Sendable {
     ]
 
     public static func assertFactPayload(_ payload: FactLLMPayload) throws {
-        let object = try payload.jsonObject()
-        for key in object.keys where forbiddenFactKeys.contains(key) {
-            throw PrivacyError.forbiddenField(key)
+        try assertFactJSON(JSONEncoder().encode(payload))
+    }
+
+    public static func assertFactJSON(_ data: Data) throws {
+        let object = try JSONSerialization.jsonObject(with: data)
+        try assertNoForbiddenFields(in: object)
+    }
+
+    private static func assertNoForbiddenFields(in value: Any) throws {
+        if let object = value as? [String: Any] {
+            for (key, child) in object {
+                if forbiddenFactKeys.contains(key) {
+                    throw PrivacyError.forbiddenField(key)
+                }
+                try assertNoForbiddenFields(in: child)
+            }
+        } else if let array = value as? [Any] {
+            for child in array {
+                try assertNoForbiddenFields(in: child)
+            }
         }
     }
 }
