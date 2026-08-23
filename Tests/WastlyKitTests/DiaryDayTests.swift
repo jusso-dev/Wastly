@@ -50,4 +50,61 @@ struct DiaryDayTests {
             wastedKilojoules: 0
         ))
     }
+
+    @Test func wastedOnlyHidesRowsWithNoWaste() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        let selectedDay = Date(timeIntervalSince1970: 900_000)
+        let logs = [
+            FoodLog(
+                loggedAt: selectedDay,
+                meal: .breakfast,
+                foodName: "Eaten only",
+                eatenGrams: 40,
+                wastedGrams: 0,
+                kilojoulesPer100g: 200
+            ),
+            FoodLog(
+                loggedAt: selectedDay,
+                meal: .lunch,
+                foodName: "Wasted only",
+                eatenGrams: 0,
+                wastedGrams: 10,
+                kilojoulesPer100g: 300
+            ),
+            FoodLog(
+                loggedAt: selectedDay,
+                meal: .dinner,
+                foodName: "Both",
+                eatenGrams: 20,
+                wastedGrams: 5,
+                kilojoulesPer100g: 400
+            ),
+            FoodLog(
+                loggedAt: try #require(calendar.date(byAdding: .day, value: 1, to: selectedDay)),
+                meal: .snacks,
+                foodName: "Tomorrow",
+                eatenGrams: 0,
+                wastedGrams: 99,
+                kilojoulesPer100g: 500
+            ),
+        ]
+
+        let wasted = DiaryDay.filtered(
+            logs,
+            on: selectedDay,
+            filter: .wasted,
+            calendar: calendar
+        )
+        let eaten = DiaryDay.filtered(
+            logs,
+            on: selectedDay,
+            filter: .eaten,
+            calendar: calendar
+        )
+
+        #expect(wasted.map(\.foodName) == ["Wasted only", "Both"])
+        #expect(wasted.allSatisfy { $0.wastedGrams > 0 })
+        #expect(eaten.map(\.foodName) == ["Eaten only", "Both"])
+    }
 }

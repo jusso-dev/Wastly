@@ -16,22 +16,8 @@ final class SessionStore: ObservableObject {
     @Published var selectedChildID: UUID?
     @Published var isLocked: Bool
     @Published var showingOnboarding: Bool
-    @Published var diaryFilter: DiaryFilter = .all
+    @Published var diaryFilter: DiaryLogFilter = .all
     @Published var diaryDay: Date = .now
-
-    enum DiaryFilter: String, CaseIterable, Identifiable {
-        case all
-        case eaten
-        case wasted
-        var id: String { rawValue }
-        var title: String {
-            switch self {
-            case .all: "All"
-            case .eaten: "Eaten only"
-            case .wasted: "Wasted only"
-            }
-        }
-    }
 
     init(container: ModelContainer) {
         self.container = container
@@ -165,17 +151,5 @@ final class SessionStore: ObservableObject {
     func lockIfNeeded() {
         let context = ModelContext(container)
         isLocked = Self.settings(in: context).faceIDEnabled
-    }
-}
-
-enum DayLogs {
-    static func filtered(logs: [FoodLog], day: Date, filter: SessionStore.DiaryFilter) -> [FoodLog] {
-        DiaryDay.logs(logs, on: day).filter { log in
-            switch filter {
-            case .all: return true
-            case .eaten: return log.eatenGrams > 0
-            case .wasted: return log.wastedGrams > 0
-            }
-        }
     }
 }

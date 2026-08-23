@@ -36,4 +36,22 @@ public enum DiaryDay: Sendable {
             wastedKilojoules: logs.reduce(0) { $0 + $1.wastedKilojoules }
         )
     }
+
+    public static func filtered(
+        _ logs: [FoodLog],
+        on day: Date,
+        filter: DiaryLogFilter,
+        calendar: Calendar = .current
+    ) -> [FoodLog] {
+        self.logs(logs, on: day, calendar: calendar).filter { log in
+            switch filter {
+            case .all:
+                true
+            case .eaten:
+                log.eatenGrams > 0
+            case .wasted:
+                log.wastedGrams > 0
+            }
+        }
+    }
 }

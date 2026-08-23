@@ -19,9 +19,9 @@ struct TodayView: View {
 
     private var dayLogs: [FoodLog] {
         guard let child else { return [] }
-        return DayLogs.filtered(
-            logs: ChildSelection.logs(for: child.id, from: allLogs),
-            day: session.diaryDay,
+        return DiaryDay.filtered(
+            ChildSelection.logs(for: child.id, from: allLogs),
+            on: session.diaryDay,
             filter: .all
         )
     }
