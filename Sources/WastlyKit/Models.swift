@@ -188,8 +188,8 @@ public final class FoodCache {
         servingGrams: Double? = nil,
         origin: FoodOrigin,
         isCustom: Bool = false,
-        useCount: Int = 1,
-        lastUsedAt: Date = .now,
+        useCount: Int = 0,
+        lastUsedAt: Date = .distantPast,
         providerKey: String? = nil
     ) {
         self.id = id

@@ -31,7 +31,7 @@ public actor LocalFirstFoodDirectory: FoodDirectory {
             )
         }
         let remoteHits = await live.search(trimmed)
-        for hit in remoteHits { await store.upsertCache(hit) }
+        for hit in remoteHits { await store.cacheLookup(hit) }
         let hits = FoodHitIdentity.merged(localHits + remoteHits)
         return FoodLookupResult(hits: hits, miss: hits.isEmpty ? .unknownBarcode : nil)
     }
@@ -46,7 +46,7 @@ public actor LocalFirstFoodDirectory: FoodDirectory {
         }
         if online, let live {
             if let hit = await live.barcode(code) {
-                await store.upsertCache(hit)
+                await store.cacheLookup(hit)
                 return FoodLookupResult(hits: [hit])
             }
             return FoodLookupResult(hits: [], miss: .unknownBarcode)
@@ -61,7 +61,7 @@ public actor LocalFirstFoodDirectory: FoodDirectory {
     public func saveCustom(_ hit: FoodHit) async {
         var custom = hit
         custom.origin = .custom
-        await store.upsertCache(custom, isCustom: true)
+        await store.saveCustom(custom)
     }
 }
 
