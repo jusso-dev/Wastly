@@ -8,6 +8,7 @@ struct SettingsView: View {
     @Query private var settingsRows: [AppSettings]
     @Query private var catalogState: [CatalogState]
     @State private var showingClearCacheConfirmation = false
+    @State private var showingRestoreConfirmation = false
     @State private var cacheMessage: String?
 
     private var settings: AppSettings {
@@ -60,14 +61,46 @@ struct SettingsView: View {
                     }
                 }
                 Section("Backup") {
-                    Toggle("iCloud backup", isOn: boolBinding(\.iCloudBackupEnabled))
+                    Toggle("iCloud backup", isOn: backupBinding)
                     Toggle("Password on the backup", isOn: boolBinding(\.backupPasswordEnabled))
+                    Text("Profiles, measurements, diary logs, custom foods, and settings are saved privately to your Apple ID. Downloaded food data is not included.")
+                        .font(.wastlyCaption)
+                        .foregroundStyle(WastlyTheme.muted)
                     if let at = settings.lastBackupAt {
                         Text("Last backup \(at.formatted(date: .abbreviated, time: .shortened))")
                             .font(.wastlyCaption)
                     } else {
                         Text("No backup yet.")
                             .font(.wastlyCaption)
+                    }
+                    Button {
+                        Task { await session.backupNow() }
+                    } label: {
+                        Label("Backup now", systemImage: "icloud.and.arrow.up")
+                    }
+                    .disabled(!settings.iCloudBackupEnabled || session.backupIsRunning)
+                    .accessibilityIdentifier("settings.backupNow")
+
+                    Button {
+                        showingRestoreConfirmation = true
+                    } label: {
+                        Label("Restore from iCloud", systemImage: "icloud.and.arrow.down")
+                    }
+                    .disabled(session.backupIsRunning)
+                    .accessibilityIdentifier("settings.restoreBackup")
+
+                    if session.backupIsRunning {
+                        HStack {
+                            ProgressView()
+                            Text("Contacting iCloud…")
+                        }
+                        .font(.wastlyCaption)
+                    }
+                    if let message = session.backupMessage {
+                        Text(message)
+                            .font(.wastlyCaption)
+                            .foregroundStyle(WastlyTheme.muted)
+                            .accessibilityIdentifier("settings.backupMessage")
                     }
                 }
                 Section("Catalog") {
@@ -109,6 +142,18 @@ struct SettingsView: View {
         } message: {
             Text("Recent provider lookups will need internet again. Custom foods and diary logs stay on this iPhone.")
         }
+        .confirmationDialog(
+            "Replace this iPhone’s diary?",
+            isPresented: $showingRestoreConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Restore iCloud backup", role: .destructive) {
+                Task { await session.restoreFromICloud() }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Child profiles, measurements, diary logs, custom foods, and settings on this iPhone will be replaced. Downloaded food data stays local.")
+        }
     }
 
     private var unitBinding: Binding<EnergyUnit> {
@@ -128,6 +173,20 @@ struct SettingsView: View {
                 settings.faceIDEnabled = new
                 try? context.save()
                 if !new { session.isLocked = false }
+            }
+        )
+    }
+
+    private var backupBinding: Binding<Bool> {
+        Binding(
+            get: { settings.iCloudBackupEnabled },
+            set: { enabled in
+                settings.iCloudBackupEnabled = enabled
+                try? context.save()
+                session.backupMessage = nil
+                if enabled {
+                    Task { await session.backupNow() }
+                }
             }
         )
     }
