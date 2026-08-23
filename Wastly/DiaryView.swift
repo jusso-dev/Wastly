@@ -319,7 +319,7 @@ private struct DiaryExportSheet: View {
                     Button("Done") { dismiss() }
                 }
             }
-            .task(id: scope) {
+            .task(id: "\(scope.rawValue):\(unit.rawValue)") {
                 prepareExport()
             }
             .onDisappear {
