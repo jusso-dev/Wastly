@@ -27,7 +27,7 @@
 	<key>NSFaceIDUsageDescription</key>
 	<string>Wastly can lock the diary behind Face ID so another person on this iPad cannot open it.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Wastly can use a photo of a pack label to fill energy and serving. The photo stays on this iPhone unless you turn on cloud plate match.</string>
+	<string>Wastly can use a photo of a pack label to fill energy and serving. The photo stays on this iPhone.</string>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>
