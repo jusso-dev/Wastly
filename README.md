@@ -4,21 +4,20 @@
 
 # Wastly
 
-Private offline iOS diary of what a child eats and wastes.
+Private offline-first iOS diary of what a child eats and wastes.
 
-Native SwiftUI. No account. Logs stay on the iPhone. iCloud backup is off in this build. The only planned network calls are food lookup (Open Food Facts, USDA) and an optional cheap LLM for fun facts.
+Native SwiftUI. No account. Child logs stay on the iPhone. Energy is stored as kJ. Display can show kcal.
 
-App icon art: [docs/app-icon.svg](docs/app-icon.svg) and [docs/app-icon.jpg](docs/app-icon.jpg). The Xcode catalog uses `Wastly/Assets.xcassets/AppIcon.appiconset/AppIcon.png` (1024 PNG).
+Food lookup is local first: recents, custom foods, a bundled seed catalog, then a versioned catalog pull when a host is set. On a miss it can call Open Food Facts and USDA. Put the USDA key in Secrets.xcconfig, not git. NUTTAB is later, not v1.
 
-Build prompt: [docs/BUILD.md](docs/BUILD.md)
+Optional cheap LLM can turn totals into fun facts. It never gets body stats, photos, or date of birth.
 
-## v1
+This cut is the Swift package `WastlyKit`. The app shell is a stacked pull request. Vision OCR, CloudKit, and a live catalog host are not wired yet. Backup code exists as an envelope (wrong password does not change the store).
 
-- Eaten and wasted amounts on every log
-- Local food store first, then Open Food Facts and USDA
-- Fun facts from totals, not from body stats
-- Face ID lock in the shell. No camera. Barcode is type plus Match.
-- CloudKit backup is not on
-- On-device Vision OCR is not on
+App icon art: [docs/app-icon.svg](docs/app-icon.svg)
+
+How to use the kit: [Sources/WastlyKit/INTEGRATION.md](Sources/WastlyKit/INTEGRATION.md)
+
+How to build: [docs/BUILD.md](docs/BUILD.md)
 
 Not a clinical dietitian. Not MyFitnessPal for adults.
