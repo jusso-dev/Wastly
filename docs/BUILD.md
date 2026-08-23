@@ -18,7 +18,7 @@ Energy is kJ in the store. Use `Energy.display` for kJ/kcal labels. Barcodes str
 
 Put the USDA key in Secrets.xcconfig. That file is gitignored.
 
-Tabs on this branch: Today, Diary, Facts, Kids, Settings. The log sheet search is wired. Barcode is a typed field plus Match, not a live camera. The app icon asset is empty. Art is in `docs/`.
+Tabs on this branch: Today, Diary, Facts, Kids, Settings. The log sheet search is wired. Barcode is a typed field plus Match, not a live camera. App Icon is `AppIcon.png` in the asset catalog (1024 PNG).
 
 Do not give medical advice, BMI lectures, or healthy-weight scores.
 
