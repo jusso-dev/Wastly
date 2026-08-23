@@ -20,14 +20,18 @@ struct RootView: View {
         .modifier(PaperBackground())
         .tint(WastlyTheme.sage)
         .onAppear {
-            if session.selectedChildID == nil {
+            if children.isEmpty {
+                session.showingOnboarding = true
+                session.selectedChildID = nil
+            } else if session.selectedChildID == nil {
                 session.selectedChildID = children.first?.id
             }
-            session.showingOnboarding = children.isEmpty
         }
         .onChange(of: children.count) { _, count in
-            session.showingOnboarding = count == 0
-            if session.selectedChildID == nil {
+            if count == 0 {
+                session.showingOnboarding = true
+                session.selectedChildID = nil
+            } else if session.selectedChildID == nil {
                 session.selectedChildID = children.first?.id
             }
         }
