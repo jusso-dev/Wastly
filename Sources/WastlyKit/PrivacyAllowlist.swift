@@ -110,20 +110,38 @@ public enum PrivacyGuard: Sendable {
         in value: Any,
         forbiddenKeys: Set<String>
     ) throws {
+        try assertNoForbiddenFields(
+            in: value,
+            normalizedForbiddenKeys: Set(forbiddenKeys.map(normalizedKey))
+        )
+    }
+
+    private static func assertNoForbiddenFields(
+        in value: Any,
+        normalizedForbiddenKeys: Set<String>
+    ) throws {
         if let object = value as? [String: Any] {
             for (key, child) in object {
-                if forbiddenKeys.contains(where: {
-                    $0.caseInsensitiveCompare(key) == .orderedSame
-                }) {
+                if normalizedForbiddenKeys.contains(normalizedKey(key)) {
                     throw PrivacyError.forbiddenField(key)
                 }
-                try assertNoForbiddenFields(in: child, forbiddenKeys: forbiddenKeys)
+                try assertNoForbiddenFields(
+                    in: child,
+                    normalizedForbiddenKeys: normalizedForbiddenKeys
+                )
             }
         } else if let array = value as? [Any] {
             for child in array {
-                try assertNoForbiddenFields(in: child, forbiddenKeys: forbiddenKeys)
+                try assertNoForbiddenFields(
+                    in: child,
+                    normalizedForbiddenKeys: normalizedForbiddenKeys
+                )
             }
         }
+    }
+
+    private static func normalizedKey(_ key: String) -> String {
+        key.lowercased().filter { $0.isLetter || $0.isNumber }
     }
 }
 
