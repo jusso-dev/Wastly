@@ -90,6 +90,47 @@ struct WastlyTests {
         let removedPassword = await passwords.current()
         #expect(removedPassword == nil)
         #expect(!settings.backupPasswordEnabled)
+
+        try await passwords.save("orphan-password")
+        await session.backupNow()
+        let selfHealedEnvelope = try #require(try await workflow.latestEnvelope())
+        #expect(!selfHealedEnvelope.backupPasswordEnabled)
+        #expect(await passwords.current() == nil)
+
+        #expect(await session.setBackupPassword("third-password"))
+        let protectedEnvelope = try #require(try await workflow.latestEnvelope())
+        settings.backupPasswordEnabled = false
+        try context.save()
+        await session.backupNow()
+        #expect(session.backupPasswordPrompt == .change)
+        #expect(try await workflow.latestEnvelope() == protectedEnvelope)
+    }
+
+    @Test @MainActor func childlessEncryptedRestoreStillSucceeds() async throws {
+        let container = try WastlyContainer.make(inMemory: true)
+        let cloud = TestBackupEnvelopeStore()
+        let workflow = BackupWorkflow(store: cloud)
+        _ = try await workflow.upload(
+            payload: BackupPayload(
+                children: [],
+                logs: [],
+                customFoods: [],
+                energyUnit: .kilojoules
+            ),
+            password: "restore-password"
+        )
+        let passwords = TestBackupPasswordStore()
+        let session = SessionStore(
+            container: container,
+            backupWorkflow: workflow,
+            backupPasswordStore: passwords
+        )
+        session.backupPasswordPrompt = .restore
+
+        #expect(await session.restoreFromICloud(password: "restore-password"))
+        #expect(session.showingOnboarding)
+        #expect(session.backupPasswordPrompt == nil)
+        #expect(await passwords.current() == "restore-password")
     }
 }
 

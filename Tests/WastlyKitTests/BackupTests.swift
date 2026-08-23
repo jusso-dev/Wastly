@@ -212,6 +212,7 @@ struct BackupTests {
     @Test func passwordPolicyRequiresEightNonWhitespaceCharacters() {
         #expect(!BackupPasswordPolicy.isValid("short"))
         #expect(!BackupPasswordPolicy.isValid("        "))
+        #expect(!BackupPasswordPolicy.isValid("a       "))
         #expect(BackupPasswordPolicy.isValid("long enough"))
     }
 

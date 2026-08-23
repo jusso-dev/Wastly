@@ -208,11 +208,16 @@ final class SessionStore: ObservableObject {
                     return
                 }
                 password = storedPassword
-            } else if storedPassword != nil {
-                backupPasswordPrompt = .change
-                backupMessage = "Finish the backup password change before backing up."
-                return
             } else {
+                if storedPassword != nil {
+                    let latestEnvelope = try await backupWorkflow.latestEnvelope()
+                    guard latestEnvelope?.backupPasswordEnabled != true else {
+                        backupPasswordPrompt = .change
+                        backupMessage = "The existing iCloud backup is password-protected. Choose a password before replacing it."
+                        return
+                    }
+                    try await backupPasswordStore.delete()
+                }
                 password = nil
             }
             let payload = try BackupSnapshot.make(in: context)
@@ -231,7 +236,7 @@ final class SessionStore: ObservableObject {
     func setBackupPassword(_ password: String) async -> Bool {
         guard !backupIsRunning else { return false }
         guard BackupPasswordPolicy.isValid(password) else {
-            backupMessage = "Use at least 8 characters for the backup password."
+            backupMessage = "Use at least 8 non-space characters for the backup password."
             return false
         }
 
@@ -342,10 +347,13 @@ final class SessionStore: ObservableObject {
                 restorePassword = nil
             }
 
+            let payload = try await Task.detached(priority: .userInitiated) {
+                try BackupCrypto.open(envelope, password: restorePassword)
+            }.value
             let context = ModelContext(container)
             try BackupRestore.apply(
-                envelope: envelope,
-                password: restorePassword,
+                payload: payload,
+                backupCreatedAt: envelope.createdAt,
                 mode: .replace,
                 context: context
             )
@@ -361,7 +369,7 @@ final class SessionStore: ObservableObject {
                 } catch {
                     backupPasswordPrompt = .change
                     backupMessage = "Backup restored, but its password could not be saved on this iPhone. Enter it again."
-                    return !children.isEmpty
+                    return true
                 }
             } else {
                 do {
@@ -370,13 +378,13 @@ final class SessionStore: ObservableObject {
                 } catch {
                     backupPasswordPrompt = nil
                     backupMessage = "Backup restored, but an old password could not be cleared from this iPhone. Unlock it, then restore again to finish cleanup."
-                    return !children.isEmpty
+                    return true
                 }
             }
             backupMessage = children.isEmpty
                 ? "The iCloud backup did not contain a child profile."
                 : "Backup restored from your private iCloud."
-            return !children.isEmpty
+            return true
         } catch BackupError.wrongPassword {
             backupPasswordPrompt = .restore
             backupMessage = "That password did not unlock the backup. Your local diary is unchanged."

@@ -64,7 +64,7 @@ struct OnboardingView: View {
                                 .textInputAutocapitalization(.never)
                                 .autocorrectionDisabled()
                                 .accessibilityIdentifier("onboarding.backupPasswordConfirmation")
-                            Text("Use at least 8 characters. Wastly cannot recover a forgotten backup password.")
+                            Text("Use at least 8 non-space characters. Wastly cannot recover a forgotten backup password.")
                                 .font(.wastlyCaption)
                                 .foregroundStyle(WastlyTheme.muted)
                         }
@@ -143,7 +143,10 @@ struct OnboardingView: View {
             session.selectedChildID = child.id
             session.isLocked = false
             if backupPassword {
-                _ = await session.setBackupPassword(backupPasswordText)
+                let passwordSaved = await session.setBackupPassword(backupPasswordText)
+                if !passwordSaved, session.backupPasswordPrompt == nil {
+                    session.backupPasswordPrompt = .set
+                }
             } else if backup {
                 await session.backupNow()
             }

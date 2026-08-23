@@ -11,7 +11,7 @@ public enum BackupPasswordPolicy: Sendable {
     public static let minimumLength = 8
 
     public static func isValid(_ password: String) -> Bool {
-        password.count >= minimumLength && password.contains(where: { !$0.isWhitespace })
+        password.count(where: { !$0.isWhitespace }) >= minimumLength
     }
 }
 
@@ -24,7 +24,7 @@ public enum BackupPasswordStoreError: Error, Equatable, LocalizedError, Sendable
     public var errorDescription: String? {
         switch self {
         case .invalidPassword:
-            "Use at least 8 characters for the backup password."
+            "Use at least 8 non-space characters for the backup password."
         case .invalidStoredPassword:
             "The saved backup password could not be read. Set it again before backing up."
         case .interactionNotAllowed:
@@ -83,7 +83,7 @@ public actor KeychainBackupPasswordStore: BackupPasswordStore {
         case errSecSuccess:
             guard let data = result as? Data,
                   let password = String(data: data, encoding: .utf8),
-                  BackupPasswordPolicy.isValid(password)
+                  !password.isEmpty
             else {
                 throw BackupPasswordStoreError.invalidStoredPassword
             }

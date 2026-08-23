@@ -15,6 +15,21 @@ public enum BackupRestore {
         context: ModelContext
     ) throws {
         let payload = try BackupCrypto.open(envelope, password: password)
+        try apply(
+            payload: payload,
+            backupCreatedAt: envelope.createdAt,
+            mode: mode,
+            context: context
+        )
+    }
+
+    /// Applies an already-decoded payload. Decode encrypted envelopes away from UI actors first.
+    public static func apply(
+        payload: BackupPayload,
+        backupCreatedAt: Date,
+        mode: RestoreMode,
+        context: ModelContext
+    ) throws {
         let childIDs = Set(payload.children.map(\.id))
         guard childIDs.count == payload.children.count,
               payload.logs.allSatisfy({ childIDs.contains($0.childID) }),
@@ -32,7 +47,7 @@ public enum BackupRestore {
                     child.firstName = row.firstName
                     child.dateOfBirth = row.dateOfBirth
                     child.photoJPEG = row.photoJPEG
-                    child.createdAt = row.createdAt ?? envelope.createdAt
+                    child.createdAt = row.createdAt ?? backupCreatedAt
                     childrenByID[child.id] = child
                 } else if mode == .replace {
                     context.delete(child)
@@ -44,7 +59,7 @@ public enum BackupRestore {
                     firstName: row.firstName,
                     dateOfBirth: row.dateOfBirth,
                     photoJPEG: row.photoJPEG,
-                    createdAt: row.createdAt ?? envelope.createdAt
+                    createdAt: row.createdAt ?? backupCreatedAt
                 )
                 context.insert(child)
                 childrenByID[row.id] = child
@@ -136,7 +151,7 @@ public enum BackupRestore {
                 settings.backupPasswordEnabled = restoredSettings.backupPasswordEnabled
                 settings.faceIDEnabled = restoredSettings.faceIDEnabled
             }
-            settings.lastBackupAt = envelope.createdAt
+            settings.lastBackupAt = backupCreatedAt
 
             try context.save()
         } catch {
