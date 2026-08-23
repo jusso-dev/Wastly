@@ -21,13 +21,12 @@ struct FactsView: View {
         return ChildSelection.logs(for: child.id, from: allLogs)
     }
 
-    private var weekLogs: [FoodLog] {
-        let start = Calendar.current.date(byAdding: .day, value: -6, to: Calendar.current.startOfDay(for: .now)) ?? .now
-        return childLogs.filter { $0.loggedAt >= start }
-    }
-
     private var totals: FactTotals {
         FactTotals.from(logs: childLogs)
+    }
+
+    private var weekSummary: FactWeekSummary {
+        FactWeekSummary.from(logs: childLogs)
     }
 
     private var cachedFact: FunFact? {
@@ -63,6 +62,9 @@ struct FactsView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     JournalCard {
                         VStack(alignment: .leading, spacing: 8) {
+                            Text("Latest facts")
+                                .font(.wastlyCaption)
+                                .foregroundStyle(WastlyTheme.muted)
                             Text(displayedFact)
                                 .font(.wastlyBody)
                                 .foregroundStyle(WastlyTheme.ink)
@@ -79,10 +81,10 @@ struct FactsView: View {
                             Text("All time")
                                 .font(.wastlyCaption)
                                 .foregroundStyle(WastlyTheme.muted)
-                            Text("Eaten \(Int(totals.eatenGrams)) g · \(Energy.display(totals.eatenKilojoules, unit: unit))")
+                            Text("\(Energy.display(totals.eatenKilojoules, unit: unit)) eaten · \(Int(totals.eatenGrams)) g")
                                 .font(.wastlyBody)
                                 .monospacedDigit()
-                            Text("Left \(Int(totals.wastedGrams)) g · \(Energy.display(totals.wastedKilojoules, unit: unit))")
+                            Text("\(Energy.display(totals.wastedKilojoules, unit: unit)) left · \(Int(totals.wastedGrams)) g")
                                 .font(.wastlyBody)
                                 .monospacedDigit()
                         }
@@ -170,40 +172,39 @@ struct FactsView: View {
     }
 
     private var weekChart: some View {
-        let days = (0..<7).compactMap { Calendar.current.date(byAdding: .day, value: $0 - 6, to: Calendar.current.startOfDay(for: .now)) }
-        let hasLogs = days.contains { day in
-            !DayLogs.filtered(logs: weekLogs, day: day, filter: .all).isEmpty
-        }
+        let summary = weekSummary
         return JournalCard {
             VStack(alignment: .leading, spacing: 10) {
                 Text("This week")
                     .font(.wastlyCaption)
                     .foregroundStyle(WastlyTheme.muted)
-                if !hasLogs {
+                if !summary.hasLogs {
                     Text("No logs this week.")
                         .font(.wastlyBody)
                         .foregroundStyle(WastlyTheme.muted)
                 } else {
                     HStack(alignment: .bottom, spacing: 8) {
-                        ForEach(days, id: \.self) { day in
-                            let totals = DiaryDay.totals(
-                                for: DayLogs.filtered(logs: weekLogs, day: day, filter: .all)
-                            )
-                            let maxG = max(days.map { d in
-                                let dayTotals = DiaryDay.totals(
-                                    for: DayLogs.filtered(logs: weekLogs, day: d, filter: .all)
-                                )
-                                return dayTotals.eatenGrams + dayTotals.wastedGrams
-                            }.max() ?? 1, 1)
+                        ForEach(summary.days) { day in
                             VStack(spacing: 4) {
                                 HStack(alignment: .bottom, spacing: 2) {
-                                    WastlyTheme.sage.frame(width: 8, height: max(4, 80 * totals.eatenGrams / maxG))
-                                    WastlyTheme.apricot.frame(width: 8, height: max(4, 80 * totals.wastedGrams / maxG))
+                                    WastlyTheme.sage.frame(
+                                        width: 8,
+                                        height: summary.barHeight(for: day.eatenGrams)
+                                    )
+                                    WastlyTheme.apricot.frame(
+                                        width: 8,
+                                        height: summary.barHeight(for: day.wastedGrams)
+                                    )
                                 }
-                                Text(day, format: .dateTime.weekday(.narrow))
+                                Text(day.day, format: .dateTime.weekday(.narrow))
                                     .font(.wastlyCaption)
                             }
                             .frame(maxWidth: .infinity)
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel(day.day.formatted(.dateTime.weekday(.wide)))
+                            .accessibilityValue(
+                                "Eaten \(Int(day.eatenGrams)) grams, left \(Int(day.wastedGrams)) grams"
+                            )
                         }
                     }
                     Text("Sage is eaten. Apricot is left.")
