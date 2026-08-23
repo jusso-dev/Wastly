@@ -24,6 +24,7 @@ struct SettingsView: View {
                         Text("kcal").tag(EnergyUnit.kilocalories)
                     }
                     .pickerStyle(.segmented)
+                    .accessibilityIdentifier("settings.energyUnit")
                 }
                 Section("Privacy") {
                     Toggle("Face ID or passcode lock", isOn: faceBinding)
@@ -34,6 +35,7 @@ struct SettingsView: View {
                 }
                 Section("Optional online facts") {
                     Toggle("Generate extra facts online", isOn: boolBinding(\.llmEnabled))
+                        .accessibilityIdentifier("settings.onlineFacts")
                     if settings.llmEnabled {
                         Text("Only aggregate days, eaten grams, wasted grams, top food, and the child’s first name are sent.")
                             .font(.wastlyCaption)
@@ -50,6 +52,7 @@ struct SettingsView: View {
                 }
                 Section("Optional cloud plate match") {
                     Toggle("Send a cropped plate photo", isOn: boolBinding(\.ocrCloudEnabled))
+                        .accessibilityIdentifier("settings.cloudPlateMatch")
                     if settings.ocrCloudEnabled {
                         Text("Only a compressed centre crop is sent. Child details, notes, and original photo metadata are excluded.")
                             .font(.wastlyCaption)
@@ -66,6 +69,7 @@ struct SettingsView: View {
                 }
                 Section("Backup") {
                     Toggle("iCloud backup", isOn: backupBinding)
+                        .accessibilityIdentifier("settings.iCloudBackup")
                     LabeledContent("Backup password") {
                         Text(settings.backupPasswordEnabled ? "On" : "Off")
                             .foregroundStyle(settings.backupPasswordEnabled ? WastlyTheme.sage : WastlyTheme.muted)
@@ -94,9 +98,11 @@ struct SettingsView: View {
                     if let at = settings.lastBackupAt {
                         Text("Last backup \(at.formatted(date: .abbreviated, time: .shortened))")
                             .font(.wastlyCaption)
+                            .accessibilityIdentifier("settings.lastBackup")
                     } else {
                         Text("No backup yet.")
                             .font(.wastlyCaption)
+                            .accessibilityIdentifier("settings.lastBackup")
                     }
                     Button {
                         Task { await session.backupNow() }
@@ -139,17 +145,20 @@ struct SettingsView: View {
                     Button("Clear downloaded food cache", role: .destructive) {
                         showingClearCacheConfirmation = true
                     }
+                    .accessibilityIdentifier("settings.clearFoodCache")
                     Text("Custom foods and diary logs are never removed.")
                         .font(.wastlyCaption)
                     if let cacheMessage {
                         Text(cacheMessage)
                             .font(.wastlyCaption)
                             .foregroundStyle(WastlyTheme.muted)
+                            .accessibilityIdentifier("settings.cacheMessage")
                     }
                 }
                 Section("About") {
                     Text("Logs stay on this iPhone. Backup uses your iCloud. Food lookup, online facts, and plate matching use only the network options described above. No ads. No analytics.")
                         .font(.wastlyCaption)
+                        .accessibilityIdentifier("settings.privacySummary")
                 }
             }
             .scrollContentBackground(.hidden)

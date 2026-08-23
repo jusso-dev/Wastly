@@ -94,10 +94,12 @@ struct TodayView: View {
                     .font(.wastlyDayTotal)
                     .monospacedDigit()
                     .foregroundStyle(WastlyTheme.ink)
+                    .accessibilityIdentifier("today.energyTotal")
                 Text("Eaten \(Int(totals.eatenGrams)) g · Left \(Int(totals.wastedGrams)) g · \(Energy.display(totals.wastedKilojoules, unit: unit)) wasted")
                     .font(.wastlyCaption)
                     .monospacedDigit()
                     .foregroundStyle(WastlyTheme.muted)
+                    .accessibilityIdentifier("today.energySummary")
             }
         }
     }
