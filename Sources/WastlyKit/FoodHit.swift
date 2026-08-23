@@ -47,3 +47,43 @@ public struct FoodLookupResult: Equatable, Sendable {
         self.miss = miss
     }
 }
+
+enum FoodHitIdentity {
+    static func key(for hit: FoodHit) -> String {
+        key(
+            name: hit.name,
+            brand: hit.brand,
+            barcodeNormalized: hit.barcodeNormalized,
+            providerKey: hit.id
+        )
+    }
+
+    static func key(
+        name: String,
+        brand: String?,
+        barcodeNormalized: String?,
+        providerKey: String
+    ) -> String {
+        if let barcodeNormalized, !barcodeNormalized.isEmpty {
+            return "barcode:\(barcodeNormalized)"
+        }
+        let canonicalName = canonical(name)
+        guard !canonicalName.isEmpty else { return "provider:\(providerKey)" }
+        return "name:\(canonicalName)|brand:\(canonical(brand ?? ""))"
+    }
+
+    static func merged(_ hits: [FoodHit]) -> [FoodHit] {
+        var seen = Set<String>()
+        return hits.filter { seen.insert(key(for: $0)).inserted }
+    }
+
+    private static func canonical(_ value: String) -> String {
+        value
+            .folding(
+                options: [.caseInsensitive, .diacriticInsensitive],
+                locale: Locale(identifier: "en_US_POSIX")
+            )
+            .split(whereSeparator: \.isWhitespace)
+            .joined(separator: " ")
+    }
+}

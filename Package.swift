@@ -14,11 +14,13 @@ let package = Package(
     targets: [
         .target(
             name: "WastlyKit",
+            exclude: ["INTEGRATION.md"],
             resources: [.process("Resources")]
         ),
         .testTarget(
             name: "WastlyKitTests",
-            dependencies: ["WastlyKit"]
+            dependencies: ["WastlyKit"],
+            resources: [.process("Fixtures")]
         ),
     ]
 )

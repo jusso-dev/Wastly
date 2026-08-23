@@ -24,6 +24,7 @@ public actor LocalFoodStore {
         let recentHits = recents
             .filter { $0.name.lowercased().contains(needle) || ($0.brand?.lowercased().contains(needle) ?? false) }
             .sorted { lhs, rhs in
+                if lhs.isCustom != rhs.isCustom { return lhs.isCustom }
                 if lhs.useCount != rhs.useCount { return lhs.useCount > rhs.useCount }
                 return lhs.lastUsedAt > rhs.lastUsedAt
             }
@@ -34,13 +35,7 @@ public actor LocalFoodStore {
             .filter { $0.name.lowercased().contains(needle) || ($0.brand?.lowercased().contains(needle) ?? false) }
             .map(Self.hit(fromCatalog:))
 
-        var seen = Set<String>()
-        var merged: [FoodHit] = []
-        for hit in recentHits + catalogHits {
-            let key = hit.barcodeNormalized ?? hit.id
-            if seen.insert(key).inserted { merged.append(hit) }
-        }
-        return merged
+        return FoodHitIdentity.merged(recentHits + catalogHits)
     }
 
     public func barcodeLocal(_ normalized: String) -> FoodHit? {
@@ -59,8 +54,17 @@ public actor LocalFoodStore {
     public func upsertCache(_ hit: FoodHit, isCustom: Bool = false) {
         let ctx = context()
         let existing = (try? ctx.fetch(FetchDescriptor<FoodCache>())) ?? []
-        let key = hit.barcodeNormalized ?? hit.id
-        if let row = existing.first(where: { ($0.barcodeNormalized ?? $0.providerKey) == key || $0.providerKey == hit.id }) {
+        let key = FoodHitIdentity.key(for: hit)
+        if let row = existing.first(where: {
+            FoodHitIdentity.key(
+                name: $0.name,
+                brand: $0.brand,
+                barcodeNormalized: $0.barcodeNormalized,
+                providerKey: $0.providerKey ?? $0.id.uuidString
+            ) == key || $0.providerKey == hit.id
+        }) {
+            // A provider result may de-duplicate against a user-authored food, but must never replace it.
+            guard !row.isCustom || isCustom else { return }
             row.name = hit.name
             row.brand = hit.brand
             row.barcodeRaw = hit.barcodeRaw

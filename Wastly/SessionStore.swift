@@ -35,7 +35,7 @@ final class SessionStore: ObservableObject {
         self.store = LocalFoodStore(container: container)
         self.directory = LocalFirstFoodDirectory(
             store: store,
-            live: RemoteFoodLookup(usdaAPIKey: nil)
+            live: RemoteFoodLookup(usdaAPIKey: Self.usdaAPIKey())
         )
         let context = ModelContext(container)
         let children = (try? context.fetch(FetchDescriptor<Child>())) ?? []
@@ -49,6 +49,18 @@ final class SessionStore: ObservableObject {
     static func bootstrap() throws -> SessionStore {
         let container = try WastlyContainer.make()
         return SessionStore(container: container)
+    }
+
+    private static func usdaAPIKey() -> String? {
+        guard let raw = Bundle.main.object(forInfoDictionaryKey: "USDAAPIKey") as? String else {
+            return nil
+        }
+        let key = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !key.isEmpty,
+              !key.contains("$("),
+              key != "paste-your-data-gov-key-here"
+        else { return nil }
+        return key
     }
 
     static func settings(in context: ModelContext) -> AppSettings {

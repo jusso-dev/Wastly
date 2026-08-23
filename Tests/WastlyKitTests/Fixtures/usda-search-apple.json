@@ -1,0 +1,11 @@
+{
+  "foods": [
+    {
+      "dataType": "Foundation",
+      "description": "Apples, raw, with skin",
+      "fdcId": 171688,
+      "foodNutrients": []
+    }
+  ],
+  "totalHits": 1
+}
