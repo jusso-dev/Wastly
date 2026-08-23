@@ -9,8 +9,7 @@ public actor LocalFoodStore {
     }
 
     public static func inMemory() throws -> LocalFoodStore {
-        let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        let container = try ModelContainer(for: Schema(WastlySchema.models), configurations: config)
+        let container = try WastlyContainer.make(inMemory: true)
         return LocalFoodStore(container: container)
     }
 

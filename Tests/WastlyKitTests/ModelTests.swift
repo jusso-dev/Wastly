@@ -4,6 +4,13 @@ import Testing
 @testable import WastlyKit
 
 struct ModelTests {
+    @Test func containerUsesVersionedSchemaAndMigrationPlan() throws {
+        let container = try WastlyContainer.make(inMemory: true)
+
+        #expect(container.schema.version == WastlySchema.versionIdentifier)
+        #expect(container.migrationPlan != nil)
+    }
+
     @Test func childAndLogRoundTrip() throws {
         let container = try WastlyContainer.make(inMemory: true)
         let context = ModelContext(container)
