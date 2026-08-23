@@ -8,7 +8,6 @@ struct SettingsView: View {
     @Query private var settingsRows: [AppSettings]
     @Query private var catalogState: [CatalogState]
     @State private var showingClearCacheConfirmation = false
-    @State private var showingRestoreConfirmation = false
     @State private var showingRemovePasswordConfirmation = false
     @State private var cacheMessage: String?
 
@@ -108,9 +107,9 @@ struct SettingsView: View {
                     .accessibilityIdentifier("settings.backupNow")
 
                     Button {
-                        showingRestoreConfirmation = true
+                        Task { await session.offerRestoreFromICloud() }
                     } label: {
-                        Label("Restore from iCloud", systemImage: "icloud.and.arrow.down")
+                        Label("Restore or merge from iCloud", systemImage: "icloud.and.arrow.down")
                     }
                     .disabled(session.backupIsRunning)
                     .accessibilityIdentifier("settings.restoreBackup")
@@ -167,18 +166,6 @@ struct SettingsView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("Recent provider lookups will need internet again. Custom foods and diary logs stay on this iPhone.")
-        }
-        .confirmationDialog(
-            "Replace this iPhone’s diary?",
-            isPresented: $showingRestoreConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button("Restore iCloud backup", role: .destructive) {
-                Task { await session.restoreFromICloud() }
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Child profiles, measurements, diary logs, custom foods, and settings on this iPhone will be replaced. Downloaded food data stays local.")
         }
         .confirmationDialog(
             "Remove the backup password?",
@@ -253,6 +240,138 @@ struct SettingsView: View {
                 cacheMessage = "Couldn’t clear the cache. Check available storage and try again."
             }
         }
+    }
+}
+
+struct BackupRestoreOfferSheet: View {
+    @EnvironmentObject private var session: SessionStore
+    let offer: BackupRestoreOffer
+    @State private var password = ""
+    @State private var showingReplaceConfirmation = false
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    Text(offer.isFirstLaunch
+                        ? "Wastly found a private iCloud backup. Nothing will be imported until you choose."
+                        : "Choose how this private iCloud backup should be imported.")
+                        .font(.wastlyBody)
+                    LabeledContent("Backup date") {
+                        Text(offer.createdAt.formatted(date: .abbreviated, time: .shortened))
+                    }
+                    LabeledContent("Password") {
+                        Text(offer.passwordProtected ? "Required" : "Not set")
+                            .foregroundStyle(offer.passwordProtected ? WastlyTheme.sage : WastlyTheme.muted)
+                    }
+                }
+
+                if offer.passwordProtected {
+                    Section("Unlock backup") {
+                        SecureField("Backup password", text: $password)
+                            .textContentType(.password)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .accessibilityIdentifier("restore.password")
+                        Text("The password is checked locally. A wrong password leaves this iPhone’s diary unchanged.")
+                            .font(.wastlyCaption)
+                            .foregroundStyle(WastlyTheme.muted)
+                    }
+                }
+
+                Section("Import choice") {
+                    Button {
+                        Task { await restore(mode: .merge) }
+                    } label: {
+                        restoreChoiceLabel(
+                            title: "Merge backup",
+                            detail: "Keep local diary rows and add backup rows whose IDs are missing.",
+                            systemImage: "arrow.triangle.merge"
+                        )
+                    }
+                    .disabled(!canRestore)
+                    .accessibilityIdentifier("restore.merge")
+
+                    Button(role: .destructive) {
+                        showingReplaceConfirmation = true
+                    } label: {
+                        restoreChoiceLabel(
+                            title: "Replace this diary",
+                            detail: "Remove local profiles, measurements, diary rows, custom foods, and settings, then use the backup.",
+                            systemImage: "arrow.clockwise.icloud"
+                        )
+                    }
+                    .disabled(!canRestore)
+                    .accessibilityIdentifier("restore.replace")
+                }
+
+                if session.backupIsRunning {
+                    Section {
+                        HStack {
+                            ProgressView()
+                            Text("Importing iCloud backup…")
+                        }
+                    }
+                }
+                if let message = session.backupMessage {
+                    Section {
+                        Text(message)
+                            .font(.wastlyCaption)
+                            .foregroundStyle(WastlyTheme.muted)
+                            .accessibilityIdentifier("restore.message")
+                    }
+                }
+            }
+            .navigationTitle(offer.isFirstLaunch ? "Restore backup?" : "Import backup")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(offer.isFirstLaunch ? "Start fresh" : "Cancel") {
+                        session.cancelRestoreOffer()
+                    }
+                    .disabled(session.backupIsRunning)
+                    .accessibilityIdentifier("restore.cancel")
+                }
+            }
+        }
+        .confirmationDialog(
+            "Replace this iPhone’s diary?",
+            isPresented: $showingReplaceConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Replace with iCloud backup", role: .destructive) {
+                Task { await restore(mode: .replace) }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Local profiles, measurements, diary rows, custom foods, and settings will be replaced. Downloaded food data stays local.")
+        }
+    }
+
+    private var canRestore: Bool {
+        !session.backupIsRunning && (!offer.passwordProtected || !password.isEmpty)
+    }
+
+    private func restoreChoiceLabel(
+        title: String,
+        detail: String,
+        systemImage: String
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Label(title, systemImage: systemImage)
+                .font(.wastlyBody.weight(.semibold))
+            Text(detail)
+                .font(.wastlyCaption)
+                .foregroundStyle(WastlyTheme.muted)
+                .multilineTextAlignment(.leading)
+        }
+        .padding(.vertical, 4)
+    }
+
+    private func restore(mode: RestoreMode) async {
+        _ = await session.restoreFromICloud(
+            mode: mode,
+            password: offer.passwordProtected ? password : nil
+        )
     }
 }
 

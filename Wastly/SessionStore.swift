@@ -12,6 +12,14 @@ enum BackupPasswordPromptPurpose: String, Identifiable {
     var id: String { rawValue }
 }
 
+struct BackupRestoreOffer: Equatable, Identifiable {
+    let createdAt: Date
+    let passwordProtected: Bool
+    let isFirstLaunch: Bool
+
+    var id: Date { createdAt }
+}
+
 enum DeviceOwnerAuthenticationResult: Equatable, Sendable {
     case authenticated
     case failed(String)
@@ -90,10 +98,12 @@ final class SessionStore: ObservableObject {
     @Published var diaryDay: Date = .now
     @Published var backupMessage: String?
     @Published var backupPasswordPrompt: BackupPasswordPromptPurpose?
+    @Published var backupRestoreOffer: BackupRestoreOffer?
     @Published private(set) var authenticationIsRunning = false
     @Published private(set) var lockMessage: String?
     @Published private(set) var backupIsRunning = false
-    private var didAttemptAutomaticRestore = false
+    private var didCheckForRestoreOffer = false
+    private var offeredRestoreEnvelope: BackupEnvelope?
     private var automaticallyUnlocksOnNextActive: Bool
 
     init(
@@ -260,13 +270,50 @@ final class SessionStore: ObservableObject {
         guard !backupIsRunning else { return }
         let context = ModelContext(container)
         let children = (try? context.fetch(FetchDescriptor<Child>())) ?? []
-        if children.isEmpty, !didAttemptAutomaticRestore {
-            didAttemptAutomaticRestore = true
-            let restored = await restoreFromICloud(showMissingMessage: false)
-            if restored { return }
+        if children.isEmpty, !didCheckForRestoreOffer {
+            didCheckForRestoreOffer = true
+            await offerRestoreFromICloud(
+                isFirstLaunch: true,
+                showMissingMessage: false
+            )
+            if backupRestoreOffer != nil { return }
         }
         guard Self.settings(in: context).iCloudBackupEnabled else { return }
         await backupNow()
+    }
+
+    func offerRestoreFromICloud(
+        isFirstLaunch: Bool = false,
+        showMissingMessage: Bool = true
+    ) async {
+        guard !backupIsRunning else { return }
+        backupIsRunning = true
+        defer { backupIsRunning = false }
+
+        do {
+            guard let envelope = try await backupWorkflow.latestEnvelope() else {
+                offeredRestoreEnvelope = nil
+                backupRestoreOffer = nil
+                if showMissingMessage { backupMessage = "No iCloud backup was found." }
+                return
+            }
+            offeredRestoreEnvelope = envelope
+            backupRestoreOffer = BackupRestoreOffer(
+                createdAt: envelope.createdAt,
+                passwordProtected: envelope.backupPasswordEnabled,
+                isFirstLaunch: isFirstLaunch
+            )
+            backupMessage = nil
+        } catch {
+            if isFirstLaunch { didCheckForRestoreOffer = false }
+            if showMissingMessage { backupMessage = backupErrorMessage(error) }
+        }
+    }
+
+    func cancelRestoreOffer() {
+        offeredRestoreEnvelope = nil
+        backupRestoreOffer = nil
+        backupMessage = nil
     }
 
     func backupNow() async {
@@ -400,6 +447,7 @@ final class SessionStore: ObservableObject {
 
     @discardableResult
     func restoreFromICloud(
+        mode: RestoreMode = .replace,
         password: String? = nil,
         showMissingMessage: Bool = true
     ) async -> Bool {
@@ -408,7 +456,13 @@ final class SessionStore: ObservableObject {
         defer { backupIsRunning = false }
 
         do {
-            guard let envelope = try await backupWorkflow.latestEnvelope() else {
+            let envelope: BackupEnvelope?
+            if let offeredRestoreEnvelope {
+                envelope = offeredRestoreEnvelope
+            } else {
+                envelope = try await backupWorkflow.latestEnvelope()
+            }
+            guard let envelope else {
                 if showMissingMessage {
                     backupMessage = "No iCloud backup was found."
                 }
@@ -422,7 +476,9 @@ final class SessionStore: ObservableObject {
                     restorePassword = try await backupPasswordStore.load()
                 }
                 guard restorePassword != nil else {
-                    backupPasswordPrompt = .restore
+                    if backupRestoreOffer == nil {
+                        backupPasswordPrompt = .restore
+                    }
                     backupMessage = "Enter the password used to protect this iCloud backup."
                     return false
                 }
@@ -437,7 +493,7 @@ final class SessionStore: ObservableObject {
             try BackupRestore.apply(
                 payload: payload,
                 backupCreatedAt: envelope.createdAt,
-                mode: .replace,
+                mode: mode,
                 context: context
             )
             let children = try context.fetch(FetchDescriptor<Child>())
@@ -445,6 +501,8 @@ final class SessionStore: ObservableObject {
             selectedChildID = children.first?.id
             showingOnboarding = children.isEmpty
             diaryLockSettingChanged(enabled: Self.settings(in: context).faceIDEnabled)
+            offeredRestoreEnvelope = nil
+            backupRestoreOffer = nil
             if let restorePassword {
                 do {
                     try await backupPasswordStore.save(restorePassword)
@@ -464,12 +522,18 @@ final class SessionStore: ObservableObject {
                     return true
                 }
             }
-            backupMessage = children.isEmpty
-                ? "The iCloud backup did not contain a child profile."
-                : "Backup restored from your private iCloud."
+            if children.isEmpty {
+                backupMessage = "The iCloud backup did not contain a child profile."
+            } else {
+                backupMessage = mode == .merge
+                    ? "Backup merged with this iPhone’s diary."
+                    : "Backup restored from your private iCloud."
+            }
             return true
         } catch BackupError.wrongPassword {
-            backupPasswordPrompt = .restore
+            if backupRestoreOffer == nil {
+                backupPasswordPrompt = .restore
+            }
             backupMessage = "That password did not unlock the backup. Your local diary is unchanged."
             return false
         } catch {
