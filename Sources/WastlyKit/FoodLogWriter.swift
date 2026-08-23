@@ -28,9 +28,15 @@ public struct FoodLogDraft: Sendable {
 
 public enum FoodLogWriteError: Error, LocalizedError, Sendable {
     case invalidAmount
+    case childUnavailable
 
     public var errorDescription: String? {
-        "Eaten and left amounts must be zero or more."
+        switch self {
+        case .invalidAmount:
+            "Eaten and left amounts must be zero or more, with a valid total."
+        case .childUnavailable:
+            "The selected child is no longer available. Choose a child and try again."
+        }
     }
 }
 
@@ -48,6 +54,20 @@ public enum FoodLogWriter: Sendable {
         else {
             throw FoodLogWriteError.invalidAmount
         }
+        let offeredGrams = draft.eatenGrams + draft.wastedGrams
+        guard offeredGrams.isFinite else {
+            throw FoodLogWriteError.invalidAmount
+        }
+
+        // Keep this write isolated from unsaved edits owned by the caller's context.
+        let writeContext = ModelContext(context.container)
+        let childID = child.id
+        let childDescriptor = FetchDescriptor<Child>(
+            predicate: #Predicate { $0.id == childID }
+        )
+        guard let persistedChild = try writeContext.fetch(childDescriptor).first else {
+            throw FoodLogWriteError.childUnavailable
+        }
 
         let trimmedNote = draft.note.trimmingCharacters(in: .whitespacesAndNewlines)
         let log = FoodLog(
@@ -58,19 +78,19 @@ public enum FoodLogWriter: Sendable {
             barcodeRaw: draft.hit.barcodeRaw,
             eatenGrams: draft.eatenGrams,
             wastedGrams: draft.wastedGrams,
-            offeredGrams: draft.eatenGrams + draft.wastedGrams,
+            offeredGrams: offeredGrams,
             kilojoulesPer100g: draft.hit.kilojoulesPer100g,
             note: trimmedNote.isEmpty ? nil : trimmedNote,
             origin: draft.hit.origin,
-            child: child
+            child: persistedChild
         )
 
         do {
-            context.insert(log)
-            try context.save()
+            writeContext.insert(log)
+            try writeContext.save()
             return log
         } catch {
-            context.rollback()
+            writeContext.rollback()
             throw error
         }
     }

@@ -96,4 +96,70 @@ struct FoodLogWriterTests {
         }
         #expect(try context.fetch(FetchDescriptor<FoodLog>()).isEmpty)
     }
+
+    @Test func saveDoesNotCommitOrDiscardCallerOwnedChanges() throws {
+        let container = try WastlyContainer.make(inMemory: true)
+        let context = ModelContext(container)
+        let child = Child(firstName: "Sam", dateOfBirth: .now)
+        let settings = AppSettings()
+        context.insert(child)
+        context.insert(settings)
+        try context.save()
+
+        settings.energyUnit = .kilocalories
+        #expect(context.hasChanges)
+
+        try FoodLogWriter.save(
+            FoodLogDraft(
+                hit: FoodHit(
+                    id: "custom:toast",
+                    name: "Toast",
+                    kilojoulesPer100g: 1_000,
+                    origin: .custom
+                ),
+                meal: .breakfast,
+                eatenGrams: 30,
+                wastedGrams: 10
+            ),
+            for: child,
+            in: context
+        )
+
+        #expect(context.hasChanges)
+        #expect(settings.energyUnit == .kilocalories)
+
+        let verificationContext = ModelContext(container)
+        let storedSettings = try #require(
+            verificationContext.fetch(FetchDescriptor<AppSettings>()).first
+        )
+        #expect(storedSettings.energyUnit == .kilojoules)
+        #expect(try verificationContext.fetch(FetchDescriptor<FoodLog>()).count == 1)
+    }
+
+    @Test func overflowingTotalDoesNotInsertALog() throws {
+        let container = try WastlyContainer.make(inMemory: true)
+        let context = ModelContext(container)
+        let child = Child(firstName: "Sam", dateOfBirth: .now)
+        context.insert(child)
+        try context.save()
+
+        #expect(throws: FoodLogWriteError.self) {
+            try FoodLogWriter.save(
+                FoodLogDraft(
+                    hit: FoodHit(
+                        id: "custom:test",
+                        name: "Test",
+                        kilojoulesPer100g: 0,
+                        origin: .custom
+                    ),
+                    meal: .other,
+                    eatenGrams: Double.greatestFiniteMagnitude,
+                    wastedGrams: Double.greatestFiniteMagnitude
+                ),
+                for: child,
+                in: context
+            )
+        }
+        #expect(try context.fetch(FetchDescriptor<FoodLog>()).isEmpty)
+    }
 }
