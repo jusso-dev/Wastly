@@ -15,7 +15,11 @@ struct DiaryView: View {
 
     private var rows: [FoodLog] {
         guard let child else { return [] }
-        return DayLogs.filtered(logs: allLogs.filter { $0.child?.id == child.id }, day: session.diaryDay, filter: session.diaryFilter)
+        return DayLogs.filtered(
+            logs: ChildSelection.logs(for: child.id, from: allLogs),
+            day: session.diaryDay,
+            filter: session.diaryFilter
+        )
     }
 
     var body: some View {

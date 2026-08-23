@@ -7,7 +7,7 @@ struct ChildSwitcher: View {
     @Query(sort: \Child.createdAt) private var children: [Child]
 
     var body: some View {
-        if children.count > 1 {
+        if ChildSelection.showsSwitcher(childCount: children.count) {
             Menu {
                 ForEach(children, id: \.id) { child in
                     Button(child.firstName) {

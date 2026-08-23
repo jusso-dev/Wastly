@@ -15,7 +15,7 @@ struct FactsView: View {
 
     private var childLogs: [FoodLog] {
         guard let child else { return [] }
-        return allLogs.filter { $0.child?.id == child.id }
+        return ChildSelection.logs(for: child.id, from: allLogs)
     }
 
     private var weekLogs: [FoodLog] {
