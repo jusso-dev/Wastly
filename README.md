@@ -1,8 +1,14 @@
+<p align="center">
+  <img src="docs/banner.jpg" alt="Wastly: What they ate. What they left." width="100%" />
+</p>
+
 # Wastly
 
 Private offline iOS diary of what a child eats and wastes.
 
 Native SwiftUI. No account. Logs stay on the iPhone. iCloud backup is the parent’s. The only network calls are food lookup and an optional cheap LLM for fun facts.
+
+App icon: [docs/app-icon.svg](docs/app-icon.svg) (also [docs/app-icon.jpg](docs/app-icon.jpg))
 
 Build prompt: [docs/BUILD.md](docs/BUILD.md)
 
