@@ -46,6 +46,7 @@
 		A1000000000000000000000D /* LogSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogSheet.swift; sourceTree = "<group>"; };
 		A10000000000000000000042 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A10000000000000000000043 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A10000000000000000000012 /* Wastly.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Wastly.entitlements; sourceTree = "<group>"; };
 		A10000000000000000000050 /* WastlyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WastlyTests.swift; sourceTree = "<group>"; };
 		A10000000000000000000010 /* Wastly.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Wastly.xcconfig; sourceTree = "<group>"; };
 
@@ -96,6 +97,7 @@
 				A1000000000000000000000D /* LogSheet.swift */,
 				A10000000000000000000042 /* Assets.xcassets */,
 				A10000000000000000000043 /* Info.plist */,
+				A10000000000000000000012 /* Wastly.entitlements */,
 			);
 			path = Wastly;
 			sourceTree = "<group>";
@@ -265,6 +267,7 @@
 			baseConfigurationReference = A10000000000000000000010 /* Wastly.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Wastly/Wastly.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -291,6 +294,7 @@
 			baseConfigurationReference = A10000000000000000000010 /* Wastly.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Wastly/Wastly.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = NO;

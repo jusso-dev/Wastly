@@ -2,8 +2,11 @@ import Foundation
 import CryptoKit
 import CommonCrypto
 import Security
+import SwiftData
 
 public struct BackupEnvelope: Codable, Equatable, Sendable {
+    public static let currentSchemaVersion = 1
+
     public var schemaVersion: Int
     public var createdAt: Date
     public var backupPasswordEnabled: Bool
@@ -13,7 +16,7 @@ public struct BackupEnvelope: Codable, Equatable, Sendable {
     public var nonce: Data?
 
     public init(
-        schemaVersion: Int = WastlySchema.version,
+        schemaVersion: Int = Self.currentSchemaVersion,
         createdAt: Date = .now,
         backupPasswordEnabled: Bool,
         ciphertext: Data? = nil,
@@ -33,15 +36,45 @@ public struct BackupEnvelope: Codable, Equatable, Sendable {
 
 public struct BackupPayload: Codable, Equatable, Sendable {
     public var children: [BackupChild]
+    public var measurements: [BackupMeasurement]
     public var logs: [BackupLog]
     public var customFoods: [SeedFood]
     public var energyUnit: EnergyUnit
+    public var settings: BackupSettings?
 
-    public init(children: [BackupChild], logs: [BackupLog], customFoods: [SeedFood], energyUnit: EnergyUnit) {
+    public init(
+        children: [BackupChild],
+        measurements: [BackupMeasurement] = [],
+        logs: [BackupLog],
+        customFoods: [SeedFood],
+        energyUnit: EnergyUnit,
+        settings: BackupSettings? = nil
+    ) {
         self.children = children
+        self.measurements = measurements
         self.logs = logs
         self.customFoods = customFoods
         self.energyUnit = energyUnit
+        self.settings = settings
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case children
+        case measurements
+        case logs
+        case customFoods
+        case energyUnit
+        case settings
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        children = try container.decode([BackupChild].self, forKey: .children)
+        measurements = try container.decodeIfPresent([BackupMeasurement].self, forKey: .measurements) ?? []
+        logs = try container.decode([BackupLog].self, forKey: .logs)
+        customFoods = try container.decode([SeedFood].self, forKey: .customFoods)
+        energyUnit = try container.decode(EnergyUnit.self, forKey: .energyUnit)
+        settings = try container.decodeIfPresent(BackupSettings.self, forKey: .settings)
     }
 }
 
@@ -49,6 +82,44 @@ public struct BackupChild: Codable, Equatable, Sendable {
     public var id: UUID
     public var firstName: String
     public var dateOfBirth: Date
+    public var photoJPEG: Data?
+    public var createdAt: Date?
+
+    public init(
+        id: UUID,
+        firstName: String,
+        dateOfBirth: Date,
+        photoJPEG: Data? = nil,
+        createdAt: Date? = nil
+    ) {
+        self.id = id
+        self.firstName = firstName
+        self.dateOfBirth = dateOfBirth
+        self.photoJPEG = photoJPEG
+        self.createdAt = createdAt
+    }
+}
+
+public struct BackupMeasurement: Codable, Equatable, Sendable {
+    public var id: UUID
+    public var childID: UUID
+    public var recordedAt: Date
+    public var heightCentimetres: Double?
+    public var weightKilograms: Double?
+
+    public init(
+        id: UUID,
+        childID: UUID,
+        recordedAt: Date,
+        heightCentimetres: Double?,
+        weightKilograms: Double?
+    ) {
+        self.id = id
+        self.childID = childID
+        self.recordedAt = recordedAt
+        self.heightCentimetres = heightCentimetres
+        self.weightKilograms = weightKilograms
+    }
 }
 
 public struct BackupLog: Codable, Equatable, Sendable {
@@ -57,22 +128,161 @@ public struct BackupLog: Codable, Equatable, Sendable {
     public var loggedAt: Date
     public var meal: MealSlot
     public var foodName: String
+    public var brand: String?
+    public var barcodeRaw: String?
     public var eatenGrams: Double
     public var wastedGrams: Double
+    public var offeredGrams: Double?
     public var kilojoulesPer100g: Double
+    public var note: String?
+    public var origin: FoodOrigin?
+
+    public init(
+        id: UUID,
+        childID: UUID,
+        loggedAt: Date,
+        meal: MealSlot,
+        foodName: String,
+        brand: String? = nil,
+        barcodeRaw: String? = nil,
+        eatenGrams: Double,
+        wastedGrams: Double,
+        offeredGrams: Double? = nil,
+        kilojoulesPer100g: Double,
+        note: String? = nil,
+        origin: FoodOrigin? = nil
+    ) {
+        self.id = id
+        self.childID = childID
+        self.loggedAt = loggedAt
+        self.meal = meal
+        self.foodName = foodName
+        self.brand = brand
+        self.barcodeRaw = barcodeRaw
+        self.eatenGrams = eatenGrams
+        self.wastedGrams = wastedGrams
+        self.offeredGrams = offeredGrams
+        self.kilojoulesPer100g = kilojoulesPer100g
+        self.note = note
+        self.origin = origin
+    }
+}
+
+public struct BackupSettings: Codable, Equatable, Sendable {
+    public var energyUnit: EnergyUnit
+    public var ocrCloudEnabled: Bool
+    public var llmEnabled: Bool
+    public var iCloudBackupEnabled: Bool
+    public var backupPasswordEnabled: Bool
+    public var faceIDEnabled: Bool
+
+    public init(
+        energyUnit: EnergyUnit,
+        ocrCloudEnabled: Bool,
+        llmEnabled: Bool,
+        iCloudBackupEnabled: Bool,
+        backupPasswordEnabled: Bool,
+        faceIDEnabled: Bool
+    ) {
+        self.energyUnit = energyUnit
+        self.ocrCloudEnabled = ocrCloudEnabled
+        self.llmEnabled = llmEnabled
+        self.iCloudBackupEnabled = iCloudBackupEnabled
+        self.backupPasswordEnabled = backupPasswordEnabled
+        self.faceIDEnabled = faceIDEnabled
+    }
+}
+
+public enum BackupSnapshot: Sendable {
+    public static func make(in context: ModelContext) throws -> BackupPayload {
+        let children = try context.fetch(FetchDescriptor<Child>())
+        let measurements = try context.fetch(FetchDescriptor<MeasurementPoint>())
+        let logs = try context.fetch(FetchDescriptor<FoodLog>())
+        let customFoods = try context.fetch(FetchDescriptor<FoodCache>()).filter(\.isCustom)
+        let settings = try context.fetch(FetchDescriptor<AppSettings>()).first
+
+        return BackupPayload(
+            children: children.map {
+                BackupChild(
+                    id: $0.id,
+                    firstName: $0.firstName,
+                    dateOfBirth: $0.dateOfBirth,
+                    photoJPEG: $0.photoJPEG,
+                    createdAt: $0.createdAt
+                )
+            },
+            measurements: measurements.compactMap { measurement in
+                guard let childID = measurement.child?.id else { return nil }
+                return BackupMeasurement(
+                    id: measurement.id,
+                    childID: childID,
+                    recordedAt: measurement.recordedAt,
+                    heightCentimetres: measurement.heightCentimetres,
+                    weightKilograms: measurement.weightKilograms
+                )
+            },
+            logs: logs.compactMap { log in
+                guard let childID = log.child?.id else { return nil }
+                return BackupLog(
+                    id: log.id,
+                    childID: childID,
+                    loggedAt: log.loggedAt,
+                    meal: log.meal,
+                    foodName: log.foodName,
+                    brand: log.brand,
+                    barcodeRaw: log.barcodeRaw,
+                    eatenGrams: log.eatenGrams,
+                    wastedGrams: log.wastedGrams,
+                    offeredGrams: log.offeredGrams,
+                    kilojoulesPer100g: log.kilojoulesPer100g,
+                    note: log.note,
+                    origin: FoodOrigin(rawValue: log.originRaw)
+                )
+            },
+            customFoods: customFoods.map {
+                SeedFood(
+                    name: $0.name,
+                    brand: $0.brand,
+                    barcode: $0.barcodeRaw ?? "",
+                    kilojoulesPer100g: $0.kilojoulesPer100g,
+                    servingGrams: $0.servingGrams
+                )
+            },
+            energyUnit: settings?.energyUnit ?? .kilojoules,
+            settings: settings.map {
+                BackupSettings(
+                    energyUnit: $0.energyUnit,
+                    ocrCloudEnabled: $0.ocrCloudEnabled,
+                    llmEnabled: $0.llmEnabled,
+                    iCloudBackupEnabled: $0.iCloudBackupEnabled,
+                    backupPasswordEnabled: $0.backupPasswordEnabled,
+                    faceIDEnabled: $0.faceIDEnabled
+                )
+            }
+        )
+    }
 }
 
 public enum BackupCrypto {
-    public static func seal(payload: BackupPayload, password: String?) throws -> BackupEnvelope {
+    public static func seal(
+        payload: BackupPayload,
+        password: String?,
+        createdAt: Date = .now
+    ) throws -> BackupEnvelope {
         let json = try JSONEncoder().encode(payload)
         guard let password, !password.isEmpty else {
-            return BackupEnvelope(backupPasswordEnabled: false, plaintextJSON: json)
+            return BackupEnvelope(
+                createdAt: createdAt,
+                backupPasswordEnabled: false,
+                plaintextJSON: json
+            )
         }
         let salt = random(16)
         let key = deriveKey(password: password, salt: salt)
         let sealed = try AES.GCM.seal(json, using: key)
         guard let combined = sealed.combined else { throw BackupError.sealFailed }
         return BackupEnvelope(
+            createdAt: createdAt,
             backupPasswordEnabled: true,
             ciphertext: combined,
             salt: salt,
@@ -81,6 +291,9 @@ public enum BackupCrypto {
     }
 
     public static func open(_ envelope: BackupEnvelope, password: String?) throws -> BackupPayload {
+        guard (1...BackupEnvelope.currentSchemaVersion).contains(envelope.schemaVersion) else {
+            throw BackupError.unsupportedSchemaVersion(envelope.schemaVersion)
+        }
         if envelope.backupPasswordEnabled {
             guard let password, !password.isEmpty, let salt = envelope.salt, let data = envelope.ciphertext else {
                 throw BackupError.wrongPassword
@@ -133,4 +346,5 @@ public enum BackupError: Error, Equatable, Sendable {
     case wrongPassword
     case missingPayload
     case sealFailed
+    case unsupportedSchemaVersion(Int)
 }

@@ -25,7 +25,9 @@ struct WastlyApp: App {
                 .preferredColorScheme(.light)
         }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .background || phase == .inactive {
+            if phase == .active {
+                Task { await session.backupOnActiveIfNeeded() }
+            } else if phase == .background || phase == .inactive {
                 session.lockIfNeeded()
             }
         }

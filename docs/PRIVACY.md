@@ -21,6 +21,7 @@ Draft answers for App Store Connect, to re-check against the release build:
 - Data linked to identity: none; Wastly has no account or advertising identifier.
 - Data collected by the developer: none for the default offline experience.
 - User content in private iCloud backup is stored in the parent’s private iCloud container when explicitly enabled.
+- Private backup contains child profiles and photos, measurements, diary logs, custom foods, and app settings. Downloaded provider/catalog food data is excluded. Wastly stores one versioned envelope in the parent’s private CloudKit database and never sends it to a Wastly server.
 - Food search terms go to the selected food provider to return lookup results; they contain no child profile fields.
 
 Before release, repeat a Charles or Proxyman pass on a physical device for food search, barcode lookup, catalog sync, optional facts, and optional plate matching. Confirm every destination and inspect bodies for forbidden child fields.

@@ -12,12 +12,16 @@ final class SessionStore: ObservableObject {
     let labelOCR: NutritionLabelOCR
     let plateMatcher: RemotePlateMatcher?
     let factGenerator: RemoteFactGenerator?
+    let backupWorkflow: BackupWorkflow
 
     @Published var selectedChildID: UUID?
     @Published var isLocked: Bool
     @Published var showingOnboarding: Bool
     @Published var diaryFilter: DiaryLogFilter = .all
     @Published var diaryDay: Date = .now
+    @Published var backupMessage: String?
+    @Published private(set) var backupIsRunning = false
+    private var didAttemptAutomaticRestore = false
 
     init(container: ModelContainer) {
         self.container = container
@@ -25,6 +29,7 @@ final class SessionStore: ObservableObject {
         self.labelOCR = NutritionLabelOCR()
         self.plateMatcher = Self.configuredPlateMatcher()
         self.factGenerator = Self.configuredFactGenerator()
+        self.backupWorkflow = BackupWorkflow(store: CloudKitBackupStore())
         self.directory = LocalFirstFoodDirectory(
             store: store,
             live: RemoteFoodLookup(usdaAPIKey: Self.usdaAPIKey())
@@ -151,5 +156,91 @@ final class SessionStore: ObservableObject {
     func lockIfNeeded() {
         let context = ModelContext(container)
         isLocked = Self.settings(in: context).faceIDEnabled
+    }
+
+    func backupOnActiveIfNeeded() async {
+        guard !backupIsRunning else { return }
+        let context = ModelContext(container)
+        let children = (try? context.fetch(FetchDescriptor<Child>())) ?? []
+        if children.isEmpty, !didAttemptAutomaticRestore {
+            didAttemptAutomaticRestore = true
+            let restored = await restoreFromICloud(showMissingMessage: false)
+            if restored { return }
+        }
+        guard Self.settings(in: context).iCloudBackupEnabled else { return }
+        await backupNow()
+    }
+
+    func backupNow() async {
+        guard !backupIsRunning else { return }
+        backupIsRunning = true
+        defer { backupIsRunning = false }
+
+        let context = ModelContext(container)
+        let settings = Self.settings(in: context)
+        guard settings.iCloudBackupEnabled else {
+            backupMessage = "Turn on iCloud backup first."
+            return
+        }
+        guard !settings.backupPasswordEnabled else {
+            backupMessage = "Password-protected iCloud backup needs a password before it can run."
+            return
+        }
+
+        do {
+            let payload = try BackupSnapshot.make(in: context)
+            let envelope = try await backupWorkflow.upload(payload: payload)
+            settings.lastBackupAt = envelope.createdAt
+            try context.save()
+            backupMessage = "Backup saved to your private iCloud."
+        } catch {
+            backupMessage = backupErrorMessage(error)
+        }
+    }
+
+    @discardableResult
+    func restoreFromICloud(showMissingMessage: Bool = true) async -> Bool {
+        guard !backupIsRunning else { return false }
+        backupIsRunning = true
+        defer { backupIsRunning = false }
+
+        do {
+            guard let envelope = try await backupWorkflow.latestEnvelope() else {
+                if showMissingMessage {
+                    backupMessage = "No iCloud backup was found."
+                }
+                return false
+            }
+            let context = ModelContext(container)
+            try BackupRestore.apply(
+                envelope: envelope,
+                password: nil,
+                mode: .replace,
+                context: context
+            )
+            let children = try context.fetch(FetchDescriptor<Child>())
+                .sorted { $0.createdAt < $1.createdAt }
+            selectedChildID = children.first?.id
+            showingOnboarding = children.isEmpty
+            isLocked = false
+            backupMessage = children.isEmpty
+                ? "The iCloud backup did not contain a child profile."
+                : "Backup restored from your private iCloud."
+            return !children.isEmpty
+        } catch BackupError.wrongPassword {
+            backupMessage = "This iCloud backup needs its password before it can be restored."
+            return false
+        } catch {
+            if showMissingMessage { backupMessage = backupErrorMessage(error) }
+            return false
+        }
+    }
+
+    private func backupErrorMessage(_ error: Error) -> String {
+        if let error = error as? LocalizedError,
+           let description = error.errorDescription {
+            return description
+        }
+        return "iCloud backup is unavailable. Your local diary is unchanged."
     }
 }
