@@ -25,6 +25,7 @@
 		A10000000000000000000040 /* WastlyKit in Frameworks */ = {isa = PBXBuildFile; productRef = A10000000000000000000041 /* WastlyKit */; };
 		A10000000000000000000045 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000042 /* Assets.xcassets */; };
 		A10000000000000000000044 /* WastlyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000050 /* WastlyTests.swift */; };
+		A10000000000000000000076 /* WastlyKit in Frameworks */ = {isa = PBXBuildFile; productRef = A10000000000000000000041 /* WastlyKit */; };
 
 		A10000000000000000000028 /* Wastly.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Wastly.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A10000000000000000000029 /* WastlyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WastlyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -50,6 +51,14 @@
 		A10000000000000000000050 /* WastlyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WastlyTests.swift; sourceTree = "<group>"; };
 		A10000000000000000000010 /* Wastly.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Wastly.xcconfig; sourceTree = "<group>"; };
 
+		A10000000000000000000074 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A1000000000000000000002A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A1000000000000000000005A;
+			remoteInfo = Wastly;
+		};
+
 		A10000000000000000000030 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -62,6 +71,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A10000000000000000000076 /* WastlyKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -150,8 +160,12 @@
 			buildRules = (
 			);
 			dependencies = (
+				A10000000000000000000075 /* PBXTargetDependency */,
 			);
 			name = WastlyTests;
+			packageProductDependencies = (
+				A10000000000000000000041 /* WastlyKit */,
+			);
 			productName = WastlyTests;
 			productReference = A10000000000000000000029 /* WastlyTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -224,6 +238,12 @@
 				A10000000000000000000044 /* WastlyTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
+		};
+
+		A10000000000000000000075 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A1000000000000000000005A /* Wastly */;
+			targetProxy = A10000000000000000000074 /* PBXContainerItemProxy */;
 		};
 
 		A10000000000000000000039 /* Debug */ = {

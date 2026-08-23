@@ -22,6 +22,8 @@ Draft answers for App Store Connect, to re-check against the release build:
 - Data collected by the developer: none for the default offline experience.
 - User content in private iCloud backup is stored in the parent’s private iCloud container when explicitly enabled.
 - Private backup contains child profiles and photos, measurements, diary logs, custom foods, and app settings. Downloaded provider/catalog food data is excluded. Wastly stores one versioned envelope in the parent’s private CloudKit database and never sends it to a Wastly server.
+- Optional backup passwords stay in the device-only, non-synchronising Keychain. Password-protected envelopes use PBKDF2-HMAC-SHA256 and AES-GCM before upload; iCloud receives only the encrypted envelope and its encryption metadata, never the password.
+- A forgotten backup password cannot be recovered and makes that encrypted iCloud backup unusable. Existing local data remains available and unchanged.
 - Food search terms go to the selected food provider to return lookup results; they contain no child profile fields.
 
 Before release, repeat a Charles or Proxyman pass on a physical device for food search, barcode lookup, catalog sync, optional facts, and optional plate matching. Confirm every destination and inspect bodies for forbidden child fields.

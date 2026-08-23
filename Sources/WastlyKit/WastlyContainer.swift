@@ -4,9 +4,12 @@ import SwiftData
 public enum WastlyContainer {
     public static func make(inMemory: Bool = false, url: URL? = nil) throws -> ModelContainer {
         let config = if let url {
-            ModelConfiguration(url: url)
+            ModelConfiguration(url: url, cloudKitDatabase: .none)
         } else {
-            ModelConfiguration(isStoredInMemoryOnly: inMemory)
+            ModelConfiguration(
+                isStoredInMemoryOnly: inMemory,
+                cloudKitDatabase: .none
+            )
         }
         let schema = Schema(versionedSchema: WastlySchema.self)
         return try ModelContainer(
