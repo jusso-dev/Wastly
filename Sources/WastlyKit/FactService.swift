@@ -84,3 +84,25 @@ public enum FactTemplates: Sendable {
         return payload
     }
 }
+
+public enum FactRequestBuilder: Sendable {
+    public static func make(
+        url: URL,
+        configuredHost: String,
+        totals: FactTotals,
+        firstName: String?
+    ) throws -> URLRequest {
+        guard PrivacyAllowlist.isAllowedLLMURL(url, configuredHosts: [configuredHost]) else {
+            throw PrivacyError.disallowedDestination
+        }
+        let payload = try FactTemplates.llmPayload(totals: totals, firstName: firstName)
+        let body = try JSONEncoder().encode(payload)
+        try PrivacyGuard.assertFactJSON(body)
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = body
+        return request
+    }
+}

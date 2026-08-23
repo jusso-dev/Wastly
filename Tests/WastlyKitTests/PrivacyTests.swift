@@ -1,3 +1,5 @@
+import Foundation
+import SwiftData
 import Testing
 @testable import WastlyKit
 
@@ -26,12 +28,89 @@ struct PrivacyTests {
         #expect(PrivacyAllowlist.isAllowedFoodHost("evil.example") == false)
         #expect(PrivacyAllowlist.isAllowedFoodHost("world.openfoodfacts.org"))
         #expect(PrivacyAllowlist.isAllowedFoodHost("api.nal.usda.gov"))
+        #expect(PrivacyAllowlist.isAllowedFoodURL(URL(string: "http://world.openfoodfacts.org")!) == false)
+        #expect(PrivacyAllowlist.isAllowedFoodURL(URL(string: "https://user@world.openfoodfacts.org")!) == false)
+        #expect(PrivacyAllowlist.isAllowedFoodURL(URL(string: "https://world.openfoodfacts.org")!))
     }
 
-    @Test func addingWeightToOutboundJSONFailsTheGuard() throws {
-        let sneaky: [String: Any] = ["firstName": "Sam", "weightKg": 18.0]
-        let keys = Set(sneaky.keys)
-        #expect(keys.contains("weightKg"))
-        #expect(PrivacyGuard.forbiddenFactKeys.contains("weightKg"))
+    @Test func addingPIIToOutboundJSONFailsTheGuard() throws {
+        for object: [String: Any] in [
+            ["firstName": "Sam", "weightKg": 18.0],
+            ["child": ["photo": Data([0xFF, 0xD8]).base64EncodedString()]],
+        ] {
+            let data = try JSONSerialization.data(withJSONObject: object)
+            #expect(throws: PrivacyError.self) {
+                try PrivacyGuard.assertFactJSON(data)
+            }
+        }
+    }
+
+    @Test func factRequestRequiresConfiguredHTTPSHost() throws {
+        let totals = FactTotals(
+            days: 3,
+            eatenGrams: 200,
+            wastedGrams: 40,
+            eatenKilojoules: 800,
+            wastedKilojoules: 160,
+            topFood: "Toast"
+        )
+        let allowed = URL(string: "https://facts.example/v1/fact")!
+        let request = try FactRequestBuilder.make(
+            url: allowed,
+            configuredHost: "facts.example",
+            totals: totals,
+            firstName: nil
+        )
+
+        #expect(request.url == allowed)
+        #expect(request.httpMethod == "POST")
+        #expect(request.httpBody != nil)
+        #expect(throws: PrivacyError.self) {
+            try FactRequestBuilder.make(
+                url: URL(string: "https://evil.example/v1/fact")!,
+                configuredHost: "facts.example",
+                totals: totals,
+                firstName: nil
+            )
+        }
+        #expect(throws: PrivacyError.self) {
+            try FactRequestBuilder.make(
+                url: URL(string: "http://facts.example/v1/fact")!,
+                configuredHost: "facts.example",
+                totals: totals,
+                firstName: nil
+            )
+        }
+    }
+
+    @Test func customLogCanBeWrittenWithoutLiveLookup() async throws {
+        let container = try WastlyContainer.make(inMemory: true)
+        let store = LocalFoodStore(container: container)
+        let directory = LocalFirstFoodDirectory(store: store)
+        let custom = FoodHit(
+            id: "custom:toast",
+            name: "Toast",
+            kilojoulesPer100g: 1_100,
+            origin: .custom
+        )
+
+        await directory.saveCustom(custom)
+        let result = await directory.search("Toast", online: false)
+        #expect(result.hits.first?.name == "Toast")
+
+        let context = ModelContext(container)
+        let child = Child(firstName: "Sam", dateOfBirth: .now)
+        context.insert(child)
+        context.insert(FoodLog(
+            meal: .breakfast,
+            foodName: custom.name,
+            eatenGrams: 30,
+            wastedGrams: 5,
+            kilojoulesPer100g: custom.kilojoulesPer100g,
+            child: child
+        ))
+        try context.save()
+
+        #expect(try context.fetch(FetchDescriptor<FoodLog>()).count == 1)
     }
 }
