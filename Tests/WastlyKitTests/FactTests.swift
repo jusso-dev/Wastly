@@ -63,6 +63,24 @@ struct FactTests {
         #expect(a.inputsHash != b.inputsHash)
     }
 
+    @Test func equivalentFoodNamesHashAndRenderConsistently() {
+        let a = FactTotals(days: 2, eatenGrams: 100, wastedGrams: 10, eatenKilojoules: 400, wastedKilojoules: 40, topFood: "  Banana  ")
+        let b = FactTotals(days: 2, eatenGrams: 100, wastedGrams: 10, eatenKilojoules: 400, wastedKilojoules: 40, topFood: "banana")
+        #expect(a.inputsHash == b.inputsHash)
+        #expect(FactTemplates.fact(for: a) == FactTemplates.fact(for: b))
+        #expect(FactTemplates.fact(for: a).contains("banana"))
+    }
+
+    @Test func energyOnlyMovementChangesRenderedFact() {
+        let a = FactTotals(days: 2, eatenGrams: 100, wastedGrams: 10, eatenKilojoules: 400, wastedKilojoules: 40, topFood: "Banana")
+        let b = FactTotals(days: 2, eatenGrams: 100, wastedGrams: 10, eatenKilojoules: 1_200, wastedKilojoules: 800, topFood: "Banana")
+        let first = FactTemplates.fact(for: a)
+        let second = FactTemplates.fact(for: b)
+        #expect(first != second)
+        #expect(first.contains("400 kJ"))
+        #expect(first.contains("40 kJ"))
+    }
+
     @Test func scalePickerKeepsComparisonsProportional() {
         #expect(FactScale.pick(forWastedGrams: 39) == .bites)
         #expect(FactScale.pick(forWastedGrams: 40) == .lunchbox)

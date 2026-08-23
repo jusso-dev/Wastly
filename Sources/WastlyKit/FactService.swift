@@ -15,6 +15,15 @@ public struct FactTotals: Equatable, Sendable {
         return wastedGrams / total
     }
 
+    public var normalizedTopFood: String? {
+        guard let topFood else { return nil }
+        let normalized = topFood
+            .split(whereSeparator: { $0.isWhitespace })
+            .joined(separator: " ")
+            .lowercased()
+        return normalized.isEmpty ? nil : normalized
+    }
+
     public init(days: Int, eatenGrams: Double, wastedGrams: Double, eatenKilojoules: Double, wastedKilojoules: Double, topFood: String? = nil) {
         self.days = days
         self.eatenGrams = eatenGrams
@@ -65,7 +74,7 @@ public struct FactTotals: Equatable, Sendable {
             String(Self.materialBucket(wastedGrams, step: 250)),
             String(Self.materialBucket(eatenKilojoules, step: 500)),
             String(Self.materialBucket(wastedKilojoules, step: 500)),
-            topFood?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() ?? "",
+            normalizedTopFood ?? "",
         ].joined(separator: "|")
         let digest = SHA256.hash(data: Data(raw.utf8))
         return digest.map { String(format: "%02x", $0) }.joined()
@@ -125,14 +134,16 @@ public enum FactTemplates: Sendable {
 
         let dayCount = max(1, totals.days)
         let period = dayCount == 1 ? "one logged day" : "\(dayCount) logged days"
-        let topFood = totals.topFood.map { " \($0) was the top food by eaten amount." } ?? ""
+        let topFood = totals.normalizedTopFood.map { " Top food by eaten amount: \($0)." } ?? ""
+        let eatenKilojoules = Int(max(0, totals.eatenKilojoules).rounded())
+        let wastedKilojoules = Int(max(0, totals.wastedKilojoules).rounded())
         if totals.wastedGrams < 1 {
-            return "\(who) recorded \(Int(totals.eatenGrams.rounded())) g eaten across \(period), with no food left.\(topFood)"
+            return "\(who) recorded \(Int(totals.eatenGrams.rounded())) g eaten (\(eatenKilojoules) kJ), with 0 kJ left across \(period).\(topFood)"
         }
 
         let wastedGrams = max(0, totals.wastedGrams)
         let wastePercent = Int((totals.wasteRatio * 100).rounded())
-        let summary = "\(who) recorded \(Int(wastedGrams.rounded())) g left across \(period) (\(wastePercent)% of logged food).\(topFood)"
+        let summary = "\(who) recorded \(Int(wastedGrams.rounded())) g left (\(wastedKilojoules) kJ), with \(eatenKilojoules) kJ eaten across \(period) (\(wastePercent)% of logged food).\(topFood)"
 
         switch FactScale.pick(forWastedGrams: wastedGrams) {
         case .bites:
