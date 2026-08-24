@@ -179,46 +179,4 @@ public enum FactTemplates: Sendable {
         }
     }
 
-    public static func llmPayload(totals: FactTotals, firstName: String?) throws -> FactLLMPayload {
-        let payload = FactLLMPayload(
-            firstName: firstName,
-            days: totals.days,
-            eatenG: totals.eatenGrams,
-            wastedG: totals.wastedGrams,
-            topFood: totals.normalizedTopFood
-        )
-        try PrivacyGuard.assertFactPayload(payload)
-        return payload
-    }
-}
-
-public enum FactRequestBuilder: Sendable {
-    public static func make(
-        url: URL,
-        configuredHost: String,
-        apiKey: String? = nil,
-        totals: FactTotals,
-        firstName: String?
-    ) throws -> URLRequest {
-        guard PrivacyAllowlist.isAllowedLLMURL(url, configuredHosts: [configuredHost]) else {
-            throw PrivacyError.disallowedDestination
-        }
-        let payload = try FactTemplates.llmPayload(totals: totals, firstName: firstName)
-        let body = try JSONEncoder().encode(payload)
-        try PrivacyGuard.assertFactJSON(body)
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.timeoutInterval = 12
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.setValue("Wastly/1.0", forHTTPHeaderField: "User-Agent")
-        request.setValue(FactPrompt.version, forHTTPHeaderField: "X-Wastly-Fact-Prompt")
-        if let apiKey = apiKey?.trimmingCharacters(in: .whitespacesAndNewlines),
-           !apiKey.isEmpty {
-            request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        }
-        request.httpBody = body
-        return request
-    }
 }

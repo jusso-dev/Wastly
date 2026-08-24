@@ -124,7 +124,7 @@ private enum CatalogDownloadOutcome {
 }
 
 private struct PendingCatalogDownload {
-    private(set) var foodsByBarcode: [String: SeedFood] = [:]
+    private(set) var foodsByKey: [String: SeedFood] = [:]
     private(set) var version: Int?
     private(set) var etag: String?
     private(set) var totalPacks = 1
@@ -140,9 +140,9 @@ private struct PendingCatalogDownload {
             etag = responseETag ?? pack.etag
         }
         for food in pack.foods {
-            foodsByBarcode[Barcode.normalized(food.barcode)] = food
+            foodsByKey[food.catalogKey] = food
         }
-        guard foodsByBarcode.count <= maximumRows else {
+        guard foodsByKey.count <= maximumRows else {
             throw CatalogSyncError.tooManyRows(limit: maximumRows)
         }
     }
@@ -150,7 +150,7 @@ private struct PendingCatalogDownload {
     func finished() throws -> CatalogDownload {
         guard let version else { throw CatalogSyncError.invalidResponse }
         return CatalogDownload(
-            foods: Array(foodsByBarcode.values),
+            foods: Array(foodsByKey.values),
             version: version,
             etag: etag,
             packCount: totalPacks

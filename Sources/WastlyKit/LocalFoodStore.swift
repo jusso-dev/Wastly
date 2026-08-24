@@ -32,21 +32,33 @@ public actor LocalFoodStore {
             }
             .map(Self.hit(fromCache:))
 
-        var descriptor = FetchDescriptor<CatalogFood>(
+        let descriptor = FetchDescriptor<CatalogFood>(
             predicate: #Predicate { row in
                 row.name.localizedStandardContains(query)
                     || (row.brand?.localizedStandardContains(query) ?? false)
             }
         )
-        descriptor.fetchLimit = 100
         let catalogHits = ((try? ctx.fetch(descriptor)) ?? [])
             .filter {
                 $0.name.lowercased().contains(needle)
                     || ($0.brand?.lowercased().contains(needle) ?? false)
             }
-            .sorted {
-                $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+            .sorted { lhs, rhs in
+                let lhsNameStartsWithQuery = lhs.name.lowercased().hasPrefix(needle)
+                let rhsNameStartsWithQuery = rhs.name.lowercased().hasPrefix(needle)
+                if lhsNameStartsWithQuery != rhsNameStartsWithQuery {
+                    return lhsNameStartsWithQuery
+                }
+
+                let lhsBrandStartsWithQuery = lhs.brand?.lowercased().hasPrefix(needle) ?? false
+                let rhsBrandStartsWithQuery = rhs.brand?.lowercased().hasPrefix(needle) ?? false
+                if lhsBrandStartsWithQuery != rhsBrandStartsWithQuery {
+                    return lhsBrandStartsWithQuery
+                }
+
+                return lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
             }
+            .prefix(100)
             .map(Self.hit(fromCatalog:))
 
         return FoodHitIdentity.merged(recentHits + catalogHits)
@@ -158,10 +170,10 @@ public actor LocalFoodStore {
             id: "catalog:\(row.barcodeNormalized)",
             name: row.name,
             brand: row.brand,
-            barcodeRaw: row.barcodeRaw,
+            barcodeRaw: row.barcodeRaw.isEmpty ? nil : row.barcodeRaw,
             kilojoulesPer100g: row.kilojoulesPer100g,
             servingGrams: row.servingGrams,
-            origin: row.catalogVersion == 0 ? .seed : .catalog
+            origin: row.catalogVersion <= 0 ? .seed : .catalog
         )
     }
 }

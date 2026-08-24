@@ -86,30 +86,25 @@ struct WastlyTests {
         #expect(first.inputsHash == second.inputsHash)
     }
 
-    @Test func outboundFactPayloadAllowsOnlyAggregatesAndOptionalFirstName() throws {
-        let payload = try FactTemplates.llmPayload(
-            totals: FactTotals(
-                days: 3,
-                eatenGrams: 200,
-                wastedGrams: 40,
-                eatenKilojoules: 800,
-                wastedKilojoules: 160,
-                topFood: "Weet-Bix"
-            ),
-            firstName: "Sam"
+    @Test func onDeviceFactPromptUsesTheVerifiedLocalStatement() {
+        let totals = FactTotals(
+            days: 3,
+            eatenGrams: 200,
+            wastedGrams: 40,
+            eatenKilojoules: 800,
+            wastedKilojoules: 160,
+            topFood: "Weet-Bix"
         )
-        let object = try payload.jsonObject()
-        #expect(Set(object.keys) == [
-            "first_name", "days", "eaten_g", "wasted_g", "top_food",
-        ])
+        let statement = FactTemplates.fact(for: totals, firstName: "Sam")
+        let prompt = FactPrompt.request(totals: totals, firstName: "Sam")
 
-        let childWeight = try JSONSerialization.data(withJSONObject: [
-            "first_name": "Sam",
-            "child_metrics": ["weight_kg": 18.0],
-        ])
-        #expect(throws: PrivacyError.self) {
-            try PrivacyGuard.assertFactJSON(childWeight)
-        }
+        #expect(prompt.contains(statement))
+        #expect(FactPrompt.version == "on-device-v1")
+        #expect(prompt.contains("https://") == false)
+    }
+
+    @Test func onDeviceFactAvailabilityHasActionableStatus() {
+        #expect(OnDeviceFactSupport.availability.settingsDescription.isEmpty == false)
     }
 
     @Test @MainActor func settingsUnitPersistsAndCacheClearKeepsDiary() async throws {

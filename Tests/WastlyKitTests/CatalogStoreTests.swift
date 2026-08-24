@@ -16,7 +16,48 @@ struct CatalogStoreTests {
         try await store.upsertCatalog(SeedCatalog.foods, version: 1)
         try await store.upsertCatalog(SeedCatalog.foods, version: 2)
         let first = await store.searchLocal("Weet")
+        #expect(first.first?.name == "Weet-Bix")
         #expect(first.filter { $0.name == "Weet-Bix" }.count == 1)
+    }
+
+    @Test func existingInstallReceivesTheCurrentBundledCatalogueOnce() async throws {
+        let directoryURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("WastlySeedUpgrade-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directoryURL) }
+        let storeURL = directoryURL.appendingPathComponent("wastly.store")
+
+        do {
+            let oldContainer = try WastlyContainer.make(url: storeURL)
+            let oldStore = LocalFoodStore(container: oldContainer)
+            try await oldStore.upsertCatalog(
+                [
+                    SeedFood(
+                        name: "Weet-Bix",
+                        brand: "Sanitarium",
+                        barcode: "9300652804562",
+                        kilojoulesPer100g: 1_470,
+                        servingGrams: 30
+                    ),
+                    SeedFood(
+                        name: "Obsolete seed",
+                        barcode: "9999999999998",
+                        kilojoulesPer100g: 100
+                    ),
+                ],
+                version: 0
+            )
+        }
+
+        let reopened = try WastlyContainer.make(url: storeURL)
+        let store = LocalFoodStore(container: reopened)
+        try await store.insertSeedIfEmpty()
+        #expect(await store.catalogSnapshot().rowCount == SeedCatalog.foods.count)
+        #expect(await store.searchLocal("Fenugreek seed").first?.name == "Fenugreek seed, dried")
+        #expect(await store.searchLocal("Obsolete seed").isEmpty)
+
+        try await store.insertSeedIfEmpty()
+        #expect(await store.catalogSnapshot().rowCount == SeedCatalog.foods.count)
     }
 
     @Test func offlineMissDoesNotCrash() async throws {

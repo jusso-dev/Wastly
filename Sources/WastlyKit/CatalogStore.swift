@@ -63,6 +63,7 @@ private struct CatalogWriteConfiguration {
 }
 
 private enum CatalogFieldLimit {
+    static let catalogKeyBytes = 64
     static let barcodeBytes = 64
     static let nameBytes = 200
     static let brandBytes = 200
@@ -178,23 +179,43 @@ extension LocalFoodStore {
     }
 
     public func insertSeedIfEmpty() throws {
+        _ = try SeedCatalog.bundledFoods()
         let context = context()
-        let count = (try? context.fetchCount(FetchDescriptor<CatalogFood>())) ?? 0
-        guard count == 0 else { return }
+        let sentinel = SeedCatalog.bundleSentinelKey
+        let storageVersion = SeedCatalog.storageVersion
+        var markerDescriptor = FetchDescriptor<CatalogFood>(
+            predicate: #Predicate {
+                $0.barcodeNormalized == sentinel && $0.catalogVersion == storageVersion
+            }
+        )
+        markerDescriptor.fetchLimit = 1
+        guard try context.fetch(markerDescriptor).isEmpty else { return }
+
+        let existing = try context.fetch(FetchDescriptor<CatalogFood>())
+        let seedKeys = Set(SeedCatalog.foods.map(\.catalogKey))
+        for row in existing where row.catalogVersion <= 0 && !seedKeys.contains(row.barcodeNormalized) {
+            context.delete(row)
+        }
+        let retained = existing.filter {
+            $0.catalogVersion > 0 || seedKeys.contains($0.barcodeNormalized)
+        }
+        let downloadedKeys = Set(existing.lazy.filter { $0.catalogVersion > 0 }.map(\.barcodeNormalized))
+        let missingFromDownloads = SeedCatalog.foods.filter { !downloadedKeys.contains($0.catalogKey) }
         try upsertCatalogRows(
-            SeedCatalog.foods,
+            missingFromDownloads,
             configuration: CatalogWriteConfiguration(
-                version: 0,
+                version: storageVersion,
                 updatedAt: .now,
                 maximumRows: Self.defaultMaximumCatalogRows
             ),
-            existing: [],
+            existing: retained,
             in: context
         )
         try context.save()
     }
 
     public func clearDownloadedCatalogLeavingSeedCustomAndLogs() throws -> CatalogClearResult {
+        _ = try SeedCatalog.bundledFoods()
         let context = context()
         let catalogRows = try context.fetch(FetchDescriptor<CatalogFood>())
         let downloaded = catalogRows.filter { $0.catalogVersion > 0 }
@@ -207,7 +228,7 @@ extension LocalFoodStore {
         try upsertCatalogRows(
             SeedCatalog.foods,
             configuration: CatalogWriteConfiguration(
-                version: 0,
+                version: SeedCatalog.storageVersion,
                 updatedAt: .now,
                 maximumRows: Self.defaultMaximumCatalogRows
             ),
@@ -228,18 +249,18 @@ extension LocalFoodStore {
         from catalogRows: [CatalogFood],
         in context: ModelContext
     ) -> [CatalogFood] {
-        let seedsByBarcode = Dictionary(
+        let seedsByKey = Dictionary(
             uniqueKeysWithValues: SeedCatalog.foods.map {
-                (Barcode.normalized($0.barcode), $0)
+                ($0.catalogKey, $0)
             }
         )
         var retained: [CatalogFood] = []
         for row in catalogRows {
-            guard let seed = seedsByBarcode[row.barcodeNormalized] else {
+            guard let seed = seedsByKey[row.barcodeNormalized] else {
                 context.delete(row)
                 continue
             }
-            apply(seed, to: row, version: 0, updatedAt: .now)
+            apply(seed, to: row, version: SeedCatalog.storageVersion, updatedAt: .now)
             retained.append(row)
         }
         return retained
@@ -276,6 +297,7 @@ extension LocalFoodStore {
             } else {
                 let food = CatalogFood(
                     barcodeRaw: row.barcode,
+                    catalogKey: key,
                     name: row.name,
                     brand: row.brand,
                     kilojoulesPer100g: row.kilojoulesPer100g,
@@ -292,9 +314,22 @@ extension LocalFoodStore {
     private func sanitizedRows(_ rows: [SeedFood]) throws -> [String: SeedFood] {
         var incoming: [String: SeedFood] = [:]
         for row in rows {
-            let key = Barcode.normalized(row.barcode)
+            let key = row.catalogKey
+            let sourceID = row.catalogID?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
             let name = row.name.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !key.isEmpty else { throw CatalogStoreError.invalidFood("missing barcode") }
+            guard !key.isEmpty else {
+                throw CatalogStoreError.invalidFood("missing barcode or catalog ID")
+            }
+            guard key.utf8.count <= CatalogFieldLimit.catalogKeyBytes else {
+                throw CatalogStoreError.invalidFood("catalog ID is too long")
+            }
+            if !sourceID.isEmpty,
+               sourceID.split(separator: ":", maxSplits: 1).count != 2 {
+                throw CatalogStoreError.invalidFood("catalog ID must be namespaced")
+            }
+            guard row.barcode.isEmpty || !Barcode.normalized(row.barcode).isEmpty else {
+                throw CatalogStoreError.invalidFood("invalid barcode")
+            }
             guard !name.isEmpty else { throw CatalogStoreError.invalidFood("missing name") }
             guard row.barcode.utf8.count <= CatalogFieldLimit.barcodeBytes else {
                 throw CatalogStoreError.invalidFood("barcode is too long")
@@ -309,6 +344,7 @@ extension LocalFoodStore {
                 throw CatalogStoreError.invalidFood("invalid serving for \(name)")
             }
             var sanitized = row
+            sanitized.catalogID = sourceID.isEmpty ? nil : sourceID.lowercased()
             sanitized.name = name
             sanitized.brand = try sanitizedBrand(row.brand)
             incoming[key] = sanitized
@@ -334,6 +370,7 @@ extension LocalFoodStore {
         food.name = row.name
         food.brand = row.brand
         food.barcodeRaw = row.barcode
+        food.barcodeNormalized = row.catalogKey
         food.kilojoulesPer100g = row.kilojoulesPer100g
         food.servingGrams = row.servingGrams
         food.catalogVersion = version
@@ -361,6 +398,7 @@ extension LocalFoodStore {
     private static func metrics(for foods: [CatalogFood]) -> (rowCount: Int, estimatedBytes: Int) {
         let bytes = foods.reduce(into: 0) { total, food in
             total += estimatedBytes(
+                catalogKey: food.barcodeNormalized,
                 barcode: food.barcodeRaw,
                 name: food.name,
                 brand: food.brand
@@ -371,12 +409,22 @@ extension LocalFoodStore {
 
     private static func metricsForSeedRows(_ foods: [SeedFood]) -> (rowCount: Int, estimatedBytes: Int) {
         let bytes = foods.reduce(into: 0) { total, food in
-            total += estimatedBytes(barcode: food.barcode, name: food.name, brand: food.brand)
+            total += estimatedBytes(
+                catalogKey: food.catalogKey,
+                barcode: food.barcode,
+                name: food.name,
+                brand: food.brand
+            )
         }
         return (foods.count, bytes)
     }
 
-    private static func estimatedBytes(barcode: String, name: String, brand: String?) -> Int {
-        barcode.utf8.count + name.utf8.count + (brand?.utf8.count ?? 0) + 64
+    private static func estimatedBytes(
+        catalogKey: String,
+        barcode: String,
+        name: String,
+        brand: String?
+    ) -> Int {
+        catalogKey.utf8.count + barcode.utf8.count + name.utf8.count + (brand?.utf8.count ?? 0) + 64
     }
 }

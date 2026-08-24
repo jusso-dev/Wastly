@@ -36,12 +36,12 @@ struct FactsView: View {
             .max { $0.createdAt < $1.createdAt }
     }
 
-    private var usesOnlineFacts: Bool {
+    private var usesOnDeviceFacts: Bool {
         (settingsRows.first?.llmEnabled ?? false) && session.factGenerator != nil
     }
 
     private var cacheInputsHash: String {
-        cacheInputsHash(for: totals, usesOnlineFacts: usesOnlineFacts)
+        cacheInputsHash(for: totals, usesOnDeviceFacts: usesOnDeviceFacts)
     }
 
     private var displayedFact: String {
@@ -101,10 +101,10 @@ struct FactsView: View {
     private func refreshFact(now: Date = .now) async {
         guard let child else { return }
         let currentTotals = FactTotals.from(logs: childLogs, now: now)
-        let generator = usesOnlineFacts ? session.factGenerator : nil
+        let generator = usesOnDeviceFacts ? session.factGenerator : nil
         let currentInputsHash = cacheInputsHash(
             for: currentTotals,
-            usesOnlineFacts: generator != nil
+            usesOnDeviceFacts: generator != nil
         )
         let previous = cachedFact
         guard FactCachePolicy.shouldRegenerate(
@@ -149,8 +149,8 @@ struct FactsView: View {
             using: generator
         )
         guard !Task.isCancelled else { return }
-        guard result.source == .remote else {
-            cacheNotice = "Using the offline fact because the optional fact service was unavailable."
+        guard result.source == .onDevice else {
+            useDeterministicFallback(fact, totals: currentTotals)
             return
         }
 
@@ -163,11 +163,20 @@ struct FactsView: View {
         }
     }
 
+    private func useDeterministicFallback(_ fact: FunFact, totals: FactTotals) {
+        fact.inputsHash = cacheInputsHash(
+            for: totals,
+            usesOnDeviceFacts: false
+        )
+        try? modelContext.save()
+        cacheNotice = "Using the deterministic fact because the on-device model is unavailable."
+    }
+
     private func cacheInputsHash(
         for totals: FactTotals,
-        usesOnlineFacts: Bool
+        usesOnDeviceFacts: Bool
     ) -> String {
-        let mode = usesOnlineFacts ? FactPrompt.version : "template-v1"
+        let mode = usesOnDeviceFacts ? FactPrompt.version : "template-v1"
         return "\(totals.inputsHash)|\(mode)"
     }
 

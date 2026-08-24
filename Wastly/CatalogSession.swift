@@ -22,7 +22,7 @@ extension SessionStore {
         do {
             try await store.insertSeedIfEmpty()
         } catch {
-            catalogMessage = "Wastly couldn’t prepare its offline seed catalog."
+            catalogMessage = "Wastly couldn’t prepare its bundled offline catalogue."
         }
         catalogSnapshot = await store.catalogSnapshot()
         if catalogIsConfigured {
@@ -35,7 +35,7 @@ extension SessionStore {
         guard let catalogSync, let catalogEndpoint else {
             if showMessage {
                 catalogMessage = "No catalog endpoint is configured in this build. "
-                    + "The offline seed remains available."
+                    + "The bundled offline catalogue remains available."
             }
             return
         }
@@ -100,9 +100,9 @@ extension SessionStore {
 
     private func clearMessage(removed: Int) -> String {
         if removed == 1 {
-            return "Removed 1 downloaded food. The offline seed, custom foods, and diary remain."
+            return "Removed 1 downloaded food. The bundled catalogue, custom foods, and diary remain."
         }
         return "Removed \(removed.formatted()) downloaded foods. "
-            + "The offline seed, custom foods, and diary remain."
+            + "The bundled catalogue, custom foods, and diary remain."
     }
 }

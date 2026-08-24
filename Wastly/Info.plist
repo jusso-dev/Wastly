@@ -28,10 +28,6 @@
 	<string>Wastly can lock the diary behind Face ID so another person on this iPad cannot open it.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Wastly uses the camera only to scan a barcode, read a label on this device, or take a plate photo when you opt in.</string>
-	<key>FactServiceAPIKey</key>
-	<string>$(FACT_SERVICE_API_KEY)</string>
-	<key>FactServiceURL</key>
-	<string>$(FACT_SERVICE_URL)</string>
 	<key>PlateMatchAPIKey</key>
 	<string>$(PLATE_MATCH_API_KEY)</string>
 	<key>PlateMatchURL</key>

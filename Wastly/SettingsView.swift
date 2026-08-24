@@ -31,19 +31,20 @@ struct SettingsView: View {
                         .font(.wastlyCaption)
                         .foregroundStyle(WastlyTheme.muted)
                 }
-                Section("Optional online facts") {
-                    Toggle("Generate extra facts online", isOn: boolBinding(\.llmEnabled))
-                        .accessibilityIdentifier("settings.onlineFacts")
+                Section("On-device AI facts") {
+                    Toggle("Generate extra facts on this iPhone", isOn: boolBinding(\.llmEnabled))
+                        .accessibilityIdentifier("settings.onDeviceFacts")
                     if settings.llmEnabled {
-                        Text("Only aggregate days, eaten grams, wasted grams, top food, and the child’s first name are sent.")
+                        Text(
+                            "Apple’s iOS 26 language model uses diary totals, top food, and first name only "
+                                + "on this device. Nothing is sent to an AI service."
+                        )
                             .font(.wastlyCaption)
-                        if session.factGenerator == nil {
-                            Text("No fact service is configured in this build. Offline facts will continue to appear.")
-                                .font(.wastlyCaption)
-                                .foregroundStyle(WastlyTheme.muted)
-                        }
+                        Text(session.onDeviceFactAvailability.settingsDescription)
+                            .font(.wastlyCaption)
+                            .foregroundStyle(WastlyTheme.muted)
                     } else {
-                        Text("Off by default. Offline facts do not need a key or internet connection.")
+                        Text("Off by default. Deterministic facts remain available on every supported iPhone.")
                             .font(.wastlyCaption)
                             .foregroundStyle(WastlyTheme.muted)
                     }
@@ -134,7 +135,7 @@ struct SettingsView: View {
                 }
                 CatalogSettingsSection()
                 Section("About") {
-                    Text("Logs stay on this iPhone. Backup uses your iCloud. Food lookup, online facts, and plate matching use only the network options described above. No ads. No analytics.")
+                    Text("Logs stay on this iPhone. Backup uses your iCloud. AI facts run on this iPhone. Food lookup and plate matching use only the network options described above. No ads. No analytics.")
                         .font(.wastlyCaption)
                         .accessibilityIdentifier("settings.privacySummary")
                 }

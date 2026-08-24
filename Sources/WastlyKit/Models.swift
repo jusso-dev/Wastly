@@ -210,7 +210,7 @@ public final class FoodCache {
 
 @Model
 public final class CatalogFood {
-    // `barcodeNormalized` is uniquely indexed; this second index backs local name search.
+    // Legacy storage name: barcode rows use a normalized barcode; generic foods use a namespaced source ID.
     #Index<CatalogFood>([\.name])
 
     @Attribute(.unique) public var barcodeNormalized: String
@@ -224,6 +224,7 @@ public final class CatalogFood {
 
     public init(
         barcodeRaw: String,
+        catalogKey: String? = nil,
         name: String,
         brand: String? = nil,
         kilojoulesPer100g: Double,
@@ -232,7 +233,10 @@ public final class CatalogFood {
         updatedAt: Date = .now
     ) {
         self.barcodeRaw = barcodeRaw
-        self.barcodeNormalized = Barcode.normalized(barcodeRaw)
+        let suppliedKey = catalogKey?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        self.barcodeNormalized = suppliedKey.isEmpty
+            ? Barcode.normalized(barcodeRaw)
+            : suppliedKey.lowercased()
         self.name = name
         self.brand = brand
         self.kilojoulesPer100g = kilojoulesPer100g

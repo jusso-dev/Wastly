@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import WastlyKit
 
 struct CatalogSettingsSection: View {
     @EnvironmentObject private var session: SessionStore
@@ -13,9 +14,12 @@ struct CatalogSettingsSection: View {
                         + updatedAt.formatted(date: .abbreviated, time: .shortened)
                 )
             } else {
-                Text("Using the bundled offline seed.")
+                Text("Using the complete bundled Australian food catalogue.")
             }
-            LabeledContent("Version", value: session.catalogSnapshot.version.formatted())
+            LabeledContent("Bundled data", value: SeedCatalog.sourceSummary)
+            if session.catalogSnapshot.version > 0 {
+                LabeledContent("Downloaded version", value: session.catalogSnapshot.version.formatted())
+            }
             LabeledContent("Offline foods", value: session.catalogSnapshot.rowCount.formatted())
             LabeledContent("Estimated catalog size", value: catalogSizeLabel)
                 .font(.wastlyCaption)
@@ -29,7 +33,7 @@ struct CatalogSettingsSection: View {
             if !session.catalogIsConfigured {
                 Text(
                     "No catalog endpoint is configured in this build. "
-                        + "Seed foods and local-first live lookup still work."
+                        + "The Australian offline catalogue and local-first live lookup still work."
                 )
                 .font(.wastlyCaption)
                 .foregroundStyle(WastlyTheme.muted)
@@ -40,9 +44,10 @@ struct CatalogSettingsSection: View {
             }
             .disabled(session.catalogIsRunning)
             .accessibilityIdentifier("settings.clearCatalog")
-            Text("The bundled seed, custom foods, and diary logs are never removed.")
+            Text("The bundled catalogue, custom foods, and diary logs are never removed.")
                 .font(.wastlyCaption)
 
+            foodDataDisclosure
             statusMessage
         }
         .confirmationDialog(
@@ -57,9 +62,20 @@ struct CatalogSettingsSection: View {
         } message: {
             Text(
                 "Downloaded catalog and lookup rows will be removed. "
-                    + "The bundled seed, custom foods, and diary logs stay on this iPhone."
+                    + "The bundled catalogue, custom foods, and diary logs stay on this iPhone."
             )
         }
+    }
+
+    private var foodDataDisclosure: some View {
+        DisclosureGroup("About offline food data") {
+            Text("Food composition data: Food Standards Australia New Zealand (FSANZ).")
+            Link("FSANZ data licence", destination: SeedCatalog.licenceURL)
+            Text(SeedCatalog.limitationStatement)
+            Text(SeedCatalog.territoryNotice)
+        }
+        .font(.wastlyCaption)
+        .foregroundStyle(WastlyTheme.muted)
     }
 
     private var updatingControls: some View {

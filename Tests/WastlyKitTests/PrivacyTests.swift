@@ -4,21 +4,6 @@ import Testing
 @testable import WastlyKit
 
 struct PrivacyTests {
-    @Test func factPayloadOmitsBodyFields() throws {
-        let payload = try FactTemplates.llmPayload(
-            totals: FactTotals(days: 3, eatenGrams: 200, wastedGrams: 40, eatenKilojoules: 800, wastedKilojoules: 160, topFood: "Weet-Bix"),
-            firstName: "Sam"
-        )
-        let object = try payload.jsonObject()
-        #expect(Set(object.keys) == [
-            "first_name", "days", "eaten_g", "wasted_g", "top_food",
-        ])
-        #expect(object["weightKg"] == nil)
-        #expect(object["photo"] == nil)
-        #expect(object["dateOfBirth"] == nil)
-        try PrivacyGuard.assertFactPayload(payload)
-    }
-
     @Test func plateMatchHasNoChildFields() {
         let request = PlateMatchRequest(jpegCrop: Data([0xFF, 0xD8]))
         let object = request.jsonObject()
@@ -36,7 +21,7 @@ struct PrivacyTests {
         #expect(PrivacyAllowlist.isAllowedFoodURL(URL(string: "https://world.openfoodfacts.org")!))
     }
 
-    @Test func addingPIIToOutboundJSONFailsTheGuard() throws {
+    @Test func addingPIIToPlateJSONFailsTheGuard() throws {
         for object: [String: Any] in [
             ["firstName": "Sam", "weightKg": 18.0],
             ["first_name": "Sam", "child_metrics": ["weight_kg": 18.0]],
@@ -44,46 +29,8 @@ struct PrivacyTests {
         ] {
             let data = try JSONSerialization.data(withJSONObject: object)
             #expect(throws: PrivacyError.self) {
-                try PrivacyGuard.assertFactJSON(data)
+                try PrivacyGuard.assertPlateJSON(data)
             }
-        }
-    }
-
-    @Test func factRequestRequiresConfiguredHTTPSHost() throws {
-        let totals = FactTotals(
-            days: 3,
-            eatenGrams: 200,
-            wastedGrams: 40,
-            eatenKilojoules: 800,
-            wastedKilojoules: 160,
-            topFood: "Toast"
-        )
-        let allowed = URL(string: "https://facts.example/v1/fact")!
-        let request = try FactRequestBuilder.make(
-            url: allowed,
-            configuredHost: "facts.example",
-            totals: totals,
-            firstName: nil
-        )
-
-        #expect(request.url == allowed)
-        #expect(request.httpMethod == "POST")
-        #expect(request.httpBody != nil)
-        #expect(throws: PrivacyError.self) {
-            try FactRequestBuilder.make(
-                url: URL(string: "https://evil.example/v1/fact")!,
-                configuredHost: "facts.example",
-                totals: totals,
-                firstName: nil
-            )
-        }
-        #expect(throws: PrivacyError.self) {
-            try FactRequestBuilder.make(
-                url: URL(string: "http://facts.example/v1/fact")!,
-                configuredHost: "facts.example",
-                totals: totals,
-                firstName: nil
-            )
         }
     }
 

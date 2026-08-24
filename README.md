@@ -8,11 +8,11 @@ Private offline-first iOS diary of what a child eats and wastes.
 
 Native SwiftUI. No account. Child logs stay on the iPhone. Energy is stored as kJ. Display can show kcal.
 
-Food lookup is local first: recents, custom foods, a bundled seed catalog, and an optional versioned bulk catalog, then Open Food Facts and USDA results merged without duplicates. Bulk catalog packs download in the background and commit only when every pack succeeds, so the prior offline version survives a failed or cancelled update. Copy `Secrets.xcconfig.example` to the gitignored `Secrets.xcconfig` to set `CATALOG_URL` and an optional USDA data.gov key. Open Food Facts barcode lookup works without one. NUTTAB is later, not v1.
+Food lookup is local first: recents, custom foods, 4,136 bundled offline foods, and an optional versioned bulk catalog, then Open Food Facts and USDA results merged without duplicates. The bundled catalogue includes every food profile in AUSNUT 2023 plus the additional profiles in AFCD Release 3. Bulk catalog packs download in the background and commit only when every pack succeeds, so the prior offline version survives a failed or cancelled update. Copy `Secrets.xcconfig.example` to the gitignored `Secrets.xcconfig` to set `CATALOG_URL` and an optional USDA data.gov key. Open Food Facts barcode lookup works without one. Sources, scope, generation, attribution, and licence: [docs/FOOD_DATA.md](docs/FOOD_DATA.md).
 
 Cloud plate matching is a separate, default-off opt-in. A configured HTTPS matcher receives only a compressed centre JPEG crop and returns candidates for parent confirmation; child details and source photo metadata are excluded.
 
-Optional cheap LLM can turn totals into fun facts. It never gets body stats, photos, or date of birth.
+On iOS 26, an optional Apple Foundation Models path can turn deterministic totals into extra fun facts entirely on the device. It uses no endpoint or API key, checks Apple Intelligence and Australian-English availability, and falls back to the existing deterministic fact on unsupported devices or generation errors.
 
 Privacy and App Store disclosure notes: [docs/PRIVACY.md](docs/PRIVACY.md).
 

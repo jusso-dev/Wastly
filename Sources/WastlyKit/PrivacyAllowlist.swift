@@ -26,14 +26,6 @@ public enum PrivacyAllowlist: Sendable {
         return Set(extraHosts.map { $0.lowercased() }).contains(host)
     }
 
-    public static func isAllowedLLMHost(_ host: String, configured: Set<String>) -> Bool {
-        Set(configured.map { $0.lowercased() }).contains(host.lowercased())
-    }
-
-    public static func isAllowedLLMURL(_ url: URL, configuredHosts: Set<String>) -> Bool {
-        isSecure(url) && isAllowedLLMHost(url.host ?? "", configured: configuredHosts)
-    }
-
     public static func isAllowedPlateMatchURL(_ url: URL, configuredHost: String) -> Bool {
         isSecure(url) && url.host?.caseInsensitiveCompare(configuredHost) == .orderedSame
     }
@@ -43,63 +35,19 @@ public enum PrivacyAllowlist: Sendable {
     }
 }
 
-/// The only fields a facts LLM may receive.
-public struct FactLLMPayload: Codable, Equatable, Sendable {
-    public var firstName: String?
-    public var days: Int
-    public var eatenG: Double
-    public var wastedG: Double
-    public var topFood: String?
-
-    enum CodingKeys: String, CodingKey {
-        case firstName = "first_name"
-        case days
-        case eatenG = "eaten_g"
-        case wastedG = "wasted_g"
-        case topFood = "top_food"
-    }
-
-    public init(firstName: String? = nil, days: Int, eatenG: Double, wastedG: Double, topFood: String? = nil) {
-        self.firstName = firstName
-        self.days = days
-        self.eatenG = eatenG
-        self.wastedG = wastedG
-        self.topFood = topFood
-    }
-
-    public func jsonObject() throws -> [String: Any] {
-        let data = try JSONEncoder().encode(self)
-        let object = try JSONSerialization.jsonObject(with: data)
-        guard let dict = object as? [String: Any] else {
-            throw PrivacyError.unexpectedPayload
-        }
-        return dict
-    }
-}
-
 public enum PrivacyError: Error, Sendable {
-    case unexpectedPayload
     case forbiddenField(String)
     case disallowedDestination
 }
 
 public enum PrivacyGuard: Sendable {
-    public static let forbiddenFactKeys: Set<String> = [
+    private static let personalProfileKeys: Set<String> = [
         "weightKg", "weightKilograms", "heightCm", "heightCentimetres",
         "photo", "photoJPEG", "dateOfBirth", "dob", "lastName",
     ]
-    public static let forbiddenPlateKeys = forbiddenFactKeys.union([
+    public static let forbiddenPlateKeys = personalProfileKeys.union([
         "child", "childId", "childID", "firstName", "name", "note",
     ])
-
-    public static func assertFactPayload(_ payload: FactLLMPayload) throws {
-        try assertFactJSON(JSONEncoder().encode(payload))
-    }
-
-    public static func assertFactJSON(_ data: Data) throws {
-        let object = try JSONSerialization.jsonObject(with: data)
-        try assertNoForbiddenFields(in: object, forbiddenKeys: forbiddenFactKeys)
-    }
 
     public static func assertPlateJSON(_ data: Data) throws {
         let object = try JSONSerialization.jsonObject(with: data)
